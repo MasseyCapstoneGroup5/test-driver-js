@@ -26,8 +26,8 @@ const client = new JSONRPCClient((jsonRPCRequest) =>
 // The function returns a promise of the result.
 client
   .request("setup", {  
-        "operatorAccountId": "0.0.47753800",
-        "operatorPrivateKey": "302e020100300506032b657004220420ffb35a1405620c245d041b9b0e31a2c1b17b4be0df9c570c445b425335f87c2b"
+        "operatorAccountId": "<your_accountId>",
+        "operatorPrivateKey": "<your_pvt_key>"
     }
    )
   .then((result) => console.log(result));
