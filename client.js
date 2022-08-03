@@ -1,5 +1,6 @@
 import { JSONRPCClient } from "json-rpc-2.0";
 import fetch from "node-fetch";
+import 'dotenv/config'
 
 // JSONRPCClient needs to know how to send a JSON-RPC request.
 // Tell it by passing a function to its constructor. The function must take a JSON-RPC request and send it.
@@ -25,9 +26,9 @@ const client = new JSONRPCClient((jsonRPCRequest) =>
 // Use client.request to make a JSON-RPC request call.
 // The function returns a promise of the result.
 client
-  .request("setup", {  
-        "operatorAccountId": "<your_accountId>",
-        "operatorPrivateKey": "<your_pvt_key>"
+  .request("setup", {
+      "operatorAccountId": process.env.OPERATOR_ACCOUNT_ID,
+      "operatorPrivateKey": process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
     }
    )
   .then((result) => console.log(result));
