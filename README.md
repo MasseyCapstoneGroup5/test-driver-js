@@ -19,6 +19,8 @@ Get a Hedera testnet account ID and private key from Hedera [here](https://porta
 Install packages with npm
 
     npm install
+    
+Start the [JSON-RPC Server](https://github.com/MasseyCapstoneGroup5/json-rpc-js-sdk)
 
 Run client
 
