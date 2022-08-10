@@ -1,16 +1,26 @@
 # test-driver-js
 
-
 ## Setup
 
-Get a Hedera testnet account ID and private key from Hedera
+Clone repository
 
-https://docs.hedera.com/guides/getting-started/environment-set-up
+    git clone https://github.com/MasseyCapstoneGroup5/test-driver-js.git
 
+Enter Project directory
+
+    cd test-driver-js
+    
+Get a Hedera testnet account ID and private key from Hedera [here](https://portal.hedera.com/register) 
 
 * Rename `.env.template` to `.env`
 * Add account ID and private key to `.env`
 
-Install
 
-npm install --save json-rpc-2.0
+Install packages with npm
+
+    npm install
+
+Run client
+
+    node client.js
+    
