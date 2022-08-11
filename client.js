@@ -4,7 +4,7 @@ import 'dotenv/config'
 
 // JSONRPCClient needs to know how to send a JSON-RPC request.
 // Tell it by passing a function to its constructor. The function must take a JSON-RPC request and send it.
-const client = new JSONRPCClient((jsonRPCRequest) =>
+export const client = new JSONRPCClient((jsonRPCRequest) =>
   fetch("http://localhost", {
     method: "POST",
     headers: {
