@@ -22,7 +22,11 @@ Install packages with npm
     
 Start the [JSON-RPC Server](https://github.com/MasseyCapstoneGroup5/json-rpc-js-sdk)
 
-Run client
 
-    node client.js
-    
+Run specific test file
+
+    npm run test test/test_Example.js
+
+Run all tests
+
+    npm run test
