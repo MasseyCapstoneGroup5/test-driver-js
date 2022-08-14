@@ -1,7 +1,34 @@
 
+import {JSONRPClient} from "../client.js";
+import {Client, AccountInfoQuery} from "@hashgraph/sdk";
+import {expect} from "chai";
 
 
-async function Test_AccountInfo(
+describe('#accountInfoTest()', function() {
+    // Send a setup request to RPC server
+    beforeEach(async function () {
+        await JSONRPClient.request("setup", {
+                "operatorAccountId": process.env.OPERATOR_ACCOUNT_ID,
+                "operatorPrivateKey": process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
+            }
+        )
+    });
+
+    // TODO: This should be getting an account ID and a private key
+    let accountID = await JSONRPClient.request("getAccountInfo", {
+        "publicKey": newPublicKey
+    });
+    // TODO: 
+    const SDKClient = Client.forTestnet();
+    SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
+    
+    const accountInfo = await new AccountInfoQuery()
+                        .setAccountId(accountID)
+                        .execute(SDKClient);
+
+    // TESTS
+    //accountinfo parameters
+    /*
     accountID, //string
     contractAccountID, //string
     isDeleted, //boolean
@@ -20,49 +47,14 @@ async function Test_AccountInfo(
     ledgerID, //string
     ethereumNonce, //string
     stakingInfo, //staking info json
-    ){
+    */
 
-    var missing_args = [];
-    let params = [arguments.accountID, arguments.contractAccountID, arguments.isDeleted,
-    arguments.proxyAccountID, arguments.key, arguments.balance,
-    arguments.balance, arguments.sendRecordThreshold, arguments.receiveRecordThreshold,
-    arguments.isReceiverSignatureRequired, arguments.expirationTime,
-    arguments.autoRenewPeriod, arguments.accountMemo, arguments.ownedNFTs,
-    arguments.maxAutomaticTokenAssociations, arguments.aliasKey,
-    arguments.ledgerID, arguments.ethereumNonce, arguments.stakingInfo];
+    const account_id = accountInfo.accountId;
+
+    // Ensure account is not deleted if exists.
+    expect(accountInfo.isDeleted).toBe(false);
+
+    // ensure account doesn't throw an error.
+    expect(accountInfo.accountId).to.not.throw();
     
-    // Map over params list to check if all parameters are strings.
-    params.map(x => {
-        var expect = require('chai').expect
-        expect(x).to.be.a('string');
-    })
-    // Print lists for testing
-    console.log(params);
-    console.log(missing_args);
-
-    // TODO: convert to json string
-    // if json string does not pass into node and return true - mark unimplemented
-    return params;
-}
-
-// Input test parameters that will be readily available in the node for testing.
-Test_AccountInfo(
-    accountID="test accountID", 
-    contractAccountID="test contractAccountID",
-    isDeleted=false, 
-    proxyAccountID="test", 
-    key="test", 
-    balance="test", 
-    sendRecordThreshold="test", 
-    receiveRecordThreshold="test", 
-    isReceiverSignatureRequired=false, 
-    expirationTime="test",
-    autoRenewPeriod=true, 
-    accountMemo="test", 
-    ownedNFTs="test", 
-    maxAutomaticTokenAssociations="test", 
-    aliasKey="test", 
-    ledgerID="test", 
-    ethereumNonce="test", 
-    stakingInfo="test"
-    );
+});
