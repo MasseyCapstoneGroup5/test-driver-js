@@ -1,32 +1,57 @@
 
 import {JSONRPClient} from "../client.js";
-import {Client, AccountInfoQuery} from "@hashgraph/sdk";
-import {expect} from "chai";
+import {Client, AccountBalanceQuery, AccountInfoQuery} from "@hashgraph/sdk";
+import {assert, expect} from "chai";
+import {main} from "../tck_main.js";
 
 
-describe('#accountInfoTest()', function() {
-    // Send a setup request to RPC server
-    beforeEach(async function () {
-        await JSONRPClient.request("setup", {
-                "operatorAccountId": process.env.OPERATOR_ACCOUNT_ID,
-                "operatorPrivateKey": process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
-            }
-        )
+it('should create account', async function () {
+    // Generate new private & public key
+    let newPrivateKey = await JSONRPClient.request("generatePrivateKey", {})
+    let newPublicKey = await JSONRPClient.request("generatePublicKey", {
+            "privateKey": newPrivateKey
     });
 
-    // TODO: This should be getting an account ID and a private key
-    let accountID = await JSONRPClient.request("getAccountInfo", {
+    // CreateAccount with the JSON-RPC
+    let newAccountId = await JSONRPClient.request("createAccount", {
         "publicKey": newPublicKey
     });
-    // TODO: 
+
+    // Check if account has been created and has at least 1 tinyBar using the JS SDK Client
     const SDKClient = Client.forTestnet();
     SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
-    
     const accountInfo = await new AccountInfoQuery()
-                        .setAccountId(accountID)
-                        .execute(SDKClient);
+        .setAccountId(newAccountId)
+        .execute(SDKClient);
 
-    // TESTS
+    
+    // Test parameters
+    // Ensure account id is equal
+    it('should return true'), async function () {
+        assert.strictEqual(accountInfo.accountId, newAccountId);
+    };
+
+    it('should return true'), async function () {
+        testNum = 001;
+        assert.notEqual(accountInfo.accountId, testNum);
+    };
+
+    it('should return false'), async function () {
+        testNum = 001;
+        assert.equal(accountInfo.accountId, testNum);
+    };
+
+    // Edge case section
+    // test whether the account is deleted or not
+    it("should return false"), async function () {
+        assert.strictEqual(accountInfo.isDeleted, false);
+    };
+
+    
+
+
+}).timeout(10000); // TODO: Better timeout functionality (use callback done)
+
     //accountinfo parameters
     /*
     accountID, //string
@@ -48,13 +73,3 @@ describe('#accountInfoTest()', function() {
     ethereumNonce, //string
     stakingInfo, //staking info json
     */
-
-    const account_id = accountInfo.accountId;
-
-    // Ensure account is not deleted if exists.
-    expect(accountInfo.isDeleted).toBe(false);
-
-    // ensure account doesn't throw an error.
-    expect(accountInfo.accountId).to.not.throw();
-    
-});
