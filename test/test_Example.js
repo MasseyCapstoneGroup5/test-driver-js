@@ -51,3 +51,26 @@ describe('#createAccount()', function () {
 
     }).timeout(10000); // TODO: Better timeout functionality (use callback done)
 });
+
+/**
+ * Test update account and compare results with js SDK
+ */
+ describe('#updateAccount()', function () { 
+    beforeEach(async function () {
+        let response = await JSONRPClient.request("getAccountInfo", {
+                "accountId": process.env.OPERATOR_ACCOUNT_ID 
+            }
+        )
+        console.log(response);
+    });
+
+    it('should update memo for account', async function () {
+        // UpdateAccount with the JSON-RPC
+       await JSONRPClient.request("updateAccount", {
+        "accountId": process.env.OPERATOR_ACCOUNT_ID,
+        "key": process.env.OPERATOR_ACCOUNT_PRIVATE_KEY,
+        "memo": "new-memo"
+    });
+
+    }).timeout(10000); // TODO: Better timeout functionality (use callback done)
+ });
