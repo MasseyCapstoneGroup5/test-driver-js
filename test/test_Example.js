@@ -2,6 +2,7 @@ import {JSONRPClient} from "../client.js";
 import {Client, AccountBalanceQuery} from "@hashgraph/sdk";
 import {expect} from "chai";
 
+let currentMemo;
 /**
  * Very basic test with hardcoded values. Setup doesn't need to be run
  */
@@ -56,21 +57,38 @@ describe('#createAccount()', function () {
  * Test update account and compare results with js SDK
  */
  describe('#updateAccount()', function () { 
-    beforeEach(async function () {
+    // get value of current memo field in accountInfo
+    this.beforeEach(async function () {
+        currentMemo = await JSONRPClient.request("getAccountMemo", {
+            "accountId": process.env.OPERATOR_ACCOUNT_ID 
+        })
+        //console.log("currentMemo " + currentMemo);
+    })
+
+    // uncomment to look at full accountInfo section
+    /*afterEach(async function () {
         let response = await JSONRPClient.request("getAccountInfo", {
                 "accountId": process.env.OPERATOR_ACCOUNT_ID 
             }
         )
         console.log(response);
-    });
+    });*/
 
     it('should update memo for account', async function () {
         // UpdateAccount with the JSON-RPC
        await JSONRPClient.request("updateAccount", {
         "accountId": process.env.OPERATOR_ACCOUNT_ID,
         "key": process.env.OPERATOR_ACCOUNT_PRIVATE_KEY,
-        "memo": "new-memo"
+        // add a memo to the AccountInfo
+        "memo": "<new-memo>"
     });
+    // Check if memo has changed using the JS SDK Client
+    let updatedMemo = await JSONRPClient.request("getAccountMemo", {
+            "accountId": process.env.OPERATOR_ACCOUNT_ID 
+        })
+        //console.log("currMemo " + currentMemo);
+        //console.log("updMemo " + updatedMemo);
+        expect(currentMemo).to.not.equal(updatedMemo);
 
     }).timeout(10000); // TODO: Better timeout functionality (use callback done)
  });
