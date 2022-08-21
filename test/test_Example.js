@@ -2,7 +2,7 @@ import {JSONRPClient} from "../client.js";
 import {Client, AccountBalanceQuery} from "@hashgraph/sdk";
 import {expect} from "chai";
 
-let currentMemo;
+let oldMemo;
 /**
  * Very basic test with hardcoded values. Setup doesn't need to be run
  */
@@ -59,10 +59,9 @@ describe('#createAccount()', function () {
  describe('#updateAccount()', function () { 
     // get value of current memo field in accountInfo
     this.beforeEach(async function () {
-        currentMemo = await JSONRPClient.request("getAccountMemo", {
+        oldMemo = await JSONRPClient.request("getAccountMemo", {
             "accountId": process.env.OPERATOR_ACCOUNT_ID 
         })
-        //console.log("currentMemo " + currentMemo);
     })
 
     // uncomment to look at full accountInfo section
@@ -86,9 +85,9 @@ describe('#createAccount()', function () {
     let updatedMemo = await JSONRPClient.request("getAccountMemo", {
             "accountId": process.env.OPERATOR_ACCOUNT_ID 
         })
-        //console.log("currMemo " + currentMemo);
+        //console.log("oldMemo " + oldMemo);
         //console.log("updMemo " + updatedMemo);
-        expect(currentMemo).to.not.equal(updatedMemo);
+        expect(oldMemo).to.not.equal(updatedMemo);
 
     }).timeout(10000); // TODO: Better timeout functionality (use callback done)
  });
