@@ -6,6 +6,7 @@ import {main} from "../tck_main.js";
 
 
 it('should create account', async function () {
+
     // Generate new private & public key
     let newPrivateKey = await JSONRPClient.request("generatePrivateKey", {})
     let newPublicKey = await JSONRPClient.request("generatePublicKey", {
@@ -24,33 +25,28 @@ it('should create account', async function () {
         .setAccountId(newAccountId)
         .execute(SDKClient);
 
-    
-    // Test parameters
-    // Ensure account id is equal
-    it('should return true'), async function () {
-        assert.strictEqual(accountInfo.accountId, newAccountId);
-    };
-
-    it('should return true'), async function () {
-        testNum = 001;
-        assert.notEqual(accountInfo.accountId, testNum);
-    };
-
-    it('should return false'), async function () {
-        testNum = 001;
-        assert.equal(accountInfo.accountId, testNum);
-    };
-
-    // Edge case section
-    // test whether the account is deleted or not
-    it("should return false"), async function () {
-        assert.strictEqual(accountInfo.isDeleted, false);
-    };
-
-    
-
-
 }).timeout(10000); // TODO: Better timeout functionality (use callback done)
+// Test parameters
+// Ensure account id is equal
+it('should return true'), async function () {
+    assert.strictEqual(accountInfo.accountId, newAccountId);
+};
+
+it('should return true'), async function () {
+    testNum = 001;
+    assert.notEqual(accountInfo.accountId, testNum);
+};
+
+it('should return false'), async function () {
+    testNum = 001;
+    assert.equal(accountInfo.accountId, testNum);
+};
+
+// Edge case section
+// test whether the account is deleted or not
+it("should return false"), async function () {
+    assert.strictEqual(accountInfo.isDeleted, false);
+};
 
     //accountinfo parameters
     /*
