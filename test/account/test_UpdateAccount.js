@@ -47,12 +47,14 @@ let getAccountInf;
     })
 
     // Another test in the same suite
-    it('should return true', async function () {
+    it('test memo is not the initial default value', async function () {
         const emptyMemoStr = '';
         assert.notEqual(getAccountInf.accountMemo, emptyMemoStr);
     })
-    it('should return true', async function () {
+    it('test memo has been set to a string value ', async function () {
+        expect(getAccountInf.accountMemo).to.be.a('string');
+    })
+    it('test memo string length = 5', async function () {
         expect(getAccountInf.accountMemo).to.have.lengthOf(5);
     })
-
 });
