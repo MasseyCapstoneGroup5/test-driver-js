@@ -3,6 +3,10 @@ import {Client, AccountInfoQuery } from "@hashgraph/sdk";
 import {expect, assert} from "chai";
 
 let getAccountInf;
+
+// generate a memo of five random char / nums
+const newRandomMemo = Math.random().toString(36).slice(-5);
+
 /**
  * Test update account and compare results with js SDK
  */
@@ -23,9 +27,6 @@ let getAccountInf;
 
     // Test
     it('should update memo on an account', async function () {
-        // generate a memo of five random char / nums
-        const newRandomMemo = Math.random().toString(36).slice(-5);
-        // console.log(newRandomMemo);
         // TODO optional create new account without a memo instead of using a random memo value
 
         // add a memo to the AccountInfo
@@ -51,10 +52,13 @@ let getAccountInf;
         const emptyMemoStr = '';
         assert.notEqual(getAccountInf.accountMemo, emptyMemoStr);
     })
-    it('test memo has been set to a string value ', async function () {
-        expect(getAccountInf.accountMemo).to.be.a('string');
+    it('test updated accountMemo is the same as set memo value', async function () {
+        assert.deepEqual(getAccountInf.accountMemo, newRandomMemo);
+    })
+    it('test memo is still set as a string value ', async function () {
+        assert.isString(getAccountInf.accountMemo);
     })
     it('test memo string length = 5', async function () {
-        expect(getAccountInf.accountMemo).to.have.lengthOf(5);
+        assert.lengthOf(getAccountInf.accountMemo, 5);
     })
 });
