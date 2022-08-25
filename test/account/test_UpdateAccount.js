@@ -51,18 +51,8 @@ let getAccountInf;
         const emptyMemoStr = '';
         assert.notEqual(getAccountInf.accountMemo, emptyMemoStr);
     })
-    it('should return false', async function () {
-        // generate a memo of four random char / nums
-        const testMemoStr4 = Math.random().toString(36).slice(-4);
-        assert.equal(getAccountInf.accountMemo, testMemoStr4);
+    it('should return true', async function () {
+        expect(getAccountInf.accountMemo).to.have.lengthOf(5);
     })
-    it('should return false', async function () {
-        // generate a memo of six random char / nums
-        const testMemoStr6 = Math.random().toString(36).slice(-6);
-        assert.strictEqual(getAccountInf.accountMemo, testMemoStr6);
-    })
-    it('should return false', async function () {
-        const testMemoNum = 10;
-        assert.equal(getAccountInf.accountMemo, testMemoNum);
-    })
+
 });
