@@ -53,7 +53,7 @@ const newRandomMemo = Math.random().toString(36).slice(-5);
         assert.notEqual(getAccountInf.accountMemo, emptyMemoStr);
     })
     it('test updated accountMemo is the same as set memo value', async function () {
-        assert.deepEqual(getAccountInf.accountMemo, newRandomMemo);
+        assert.strictEqual(getAccountInf.accountMemo, newRandomMemo);
     })
     it('test memo is still set as a string value ', async function () {
         assert.isString(getAccountInf.accountMemo);
