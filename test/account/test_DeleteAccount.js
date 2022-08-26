@@ -3,17 +3,22 @@ import {Client, Hbar, AccountInfoQuery} from "@hashgraph/sdk";
 import {assert, expect} from "chai";
 
 let newAccountId;
-let newPrivateKey;
-let newAccountBalHbars;
-let baseAccountBalHbars;
-let updatedBalanceHbars;
+let newAccountPrivateKey;
+let newAccountBal;
+
+let recipientAccountId;
+let recipientPrivateKey;
+let recipientInitialBal;
+let recipientFinalBal;
 /**
  * Test delete account and compare results with js SDK
+ * Two test accounts will be created -- 
+ * 'newAccount' -- will be the account that is eventually deleted
+ * 'recipientAccount' --  will receive closing balance of newAccount
  */
  describe('#deleteAccount()', function () { 
     this.timeout(10000);
 
-    // before and after hooks (normally used to set up and reset the client SDK)
     before(async function generateAccountId() {
         await JSONRPClient.request("setup", {
                 "operatorAccountId": process.env.OPERATOR_ACCOUNT_ID,
@@ -21,75 +26,76 @@ let updatedBalanceHbars;
             }
         )
     });
-
     after(async function () {
         await JSONRPClient.request("reset")
     });
 
-    it('should create a new account', async function () {
+    it('should create newAccount', async function () {
         // Generate new private & public key
-        newPrivateKey = await JSONRPClient.request("generatePrivateKey", {})
+        newAccountPrivateKey = await JSONRPClient.request("generatePrivateKey", {})
         let newPublicKey = await JSONRPClient.request("generatePublicKey", {
-            "privateKey": newPrivateKey
+            "privateKey": newAccountPrivateKey
         });
-
         //CreateAccount with the JSON-RPC
         newAccountId = await JSONRPClient.request("createAccount", {
             "publicKey": newPublicKey
         });
     });
 
-    it('should get balance of the new account', async function () {
-        //Get balance of newly created account
+    it('should create recipientAccount', async function () {
+        // Generate new private & public key
+        recipientPrivateKey = await JSONRPClient.request("generatePrivateKey", {})
+        let recipientPublicKey = await JSONRPClient.request("generatePublicKey", {
+            "privateKey": recipientPrivateKey
+        });
+        //CreateAccount with the JSON-RPC
+        recipientAccountId = await JSONRPClient.request("createAccount", {
+            "publicKey": recipientPublicKey
+        });
+    });
+
+    it('should get initial balance of newAccount', async function () {
+        //Get balance of newAccount
         let newAccountInfo = await JSONRPClient.request("getAccountInfo", {
             "accountId": newAccountId
         });
-        let newAccountBalTinybars = Hbar.fromString(newAccountInfo.balance)._valueInTinybar;  
-        newAccountBalHbars = parseInt(Hbar.fromTinybars(newAccountBalTinybars)); 
-        //console.log("newAccountBalHB " + newAccountBalHbars);
+        newAccountBal = parseInt(Hbar.fromString(newAccountInfo.balance)._valueInTinybar);  
     });
-
-    it('should get balance of the base (main) account', async function () {
-        //Get balance of newly created account
-        let baseAccountInfo = await JSONRPClient.request("getAccountInfo", {
-            "accountId": process.env.OPERATOR_ACCOUNT_ID
+    it('should get initial balance of recipientAccount', async function () {
+        //Get balance of recipientAccount
+        let recipientAccountInfo = await JSONRPClient.request("getAccountInfo", {
+            "accountId": recipientAccountId
         });
-        let baseAccountBalTinybars = Hbar.fromString(baseAccountInfo.balance)._valueInTinybar;        
-        baseAccountBalHbars = parseInt(Hbar.fromTinybars(baseAccountBalTinybars)); 
-        //console.log("baseAccountBal " + baseAccountBalHbars);
-    });
+        recipientInitialBal = parseInt(Hbar.fromString(recipientAccountInfo.balance)._valueInTinybar);       
+    }); 
 
-    it('should delete account and set accountId to null', async function () {
+    it('should delete newAccount and transfer its balance to recipientAccount', async function () {
         // Delete newly created account with the JSON-RPC
         const deletedAccountId = await JSONRPClient.request("deleteAccount", {
             "accountId": newAccountId,          
-            "accountKey": newPrivateKey,  
-            "OPERATOR_ID": process.env.OPERATOR_ACCOUNT_ID            
+            "accountKey": newAccountPrivateKey,  
+            "recipientId": recipientAccountId            
         })
         // Check if deleted account's ID has been removed
         expect(deletedAccountId.accountId).to.equal(null);
     });
     /**
     * Further tests for accountId on Testnet will throw failed precheck error: ACCOUNT_DELETED
-    * Instead -> test for transfer of closing balance of deleted account to the base account
+    * Instead -> test for transfer of newAccount's closing balance to recipientAccount
     */
-    it('test base account received closing balance', async function () {
+    it('test recipientAccount received closing balance', async function () {
 
         const SDKClient = Client.forTestnet();
         SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
-        let getBaseAccountInf = await new AccountInfoQuery()
-        .setAccountId(process.env.OPERATOR_ACCOUNT_ID)
+        let getAccountInf = await new AccountInfoQuery()
+        .setAccountId(recipientAccountId)
         .execute(SDKClient); 
 
-        let updatedBalanceTinybars = getBaseAccountInf.balance._valueInTinybar;        
-        updatedBalanceHbars = parseInt(Hbar.fromTinybars(updatedBalanceTinybars)); 
-        //console.log("updatedBalanceHbars " + updatedBalanceHbars);
+        recipientFinalBal = parseInt(getAccountInf.balance._valueInTinybar); 
 
         // Check if balance was successfully increased by amount of deleted account's balance
-        assert.isAtLeast(
-            updatedBalanceHbars, 
-            baseAccountBalHbars + newAccountBalHbars - 1,
-            'new account bal is greater or equal to old bal + closed account bal (less 1 for any fees)'
-            );
+        assert.strictEqual(recipientFinalBal, newAccountBal +recipientInitialBal,
+            "new account bal is initial bal + the deleted account's closing bal "
+           );
     })    
 });
