@@ -59,14 +59,14 @@ let recipientFinalBal;
         let newAccountInfo = await JSONRPClient.request("getAccountInfo", {
             "accountId": newAccountId
         });
-        newAccountBal = parseInt(Hbar.fromString(newAccountInfo.balance)._valueInTinybar);  
+        newAccountBal = BigInt(Hbar.fromString(newAccountInfo.balance)._valueInTinybar); 
     });
     it('should get initial balance of recipientAccount', async function () {
         //Get balance of recipientAccount
         let recipientAccountInfo = await JSONRPClient.request("getAccountInfo", {
             "accountId": recipientAccountId
         });
-        recipientInitialBal = parseInt(Hbar.fromString(recipientAccountInfo.balance)._valueInTinybar);       
+        recipientInitialBal = BigInt(Hbar.fromString(recipientAccountInfo.balance)._valueInTinybar);       
     }); 
 
     it('should delete newAccount and transfer its balance to recipientAccount', async function () {
@@ -91,7 +91,7 @@ let recipientFinalBal;
         .setAccountId(recipientAccountId)
         .execute(SDKClient); 
 
-        recipientFinalBal = parseInt(getAccountInf.balance._valueInTinybar); 
+        recipientFinalBal = BigInt(getAccountInf.balance._valueInTinybar); 
 
         // Check if recipient's balance was successfully increased by amount of deleted account's balance
         assert.strictEqual(recipientFinalBal, newAccountBal +recipientInitialBal,
