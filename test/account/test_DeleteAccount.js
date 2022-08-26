@@ -93,9 +93,9 @@ let recipientFinalBal;
 
         recipientFinalBal = parseInt(getAccountInf.balance._valueInTinybar); 
 
-        // Check if balance was successfully increased by amount of deleted account's balance
+        // Check if recipient's balance was successfully increased by amount of deleted account's balance
         assert.strictEqual(recipientFinalBal, newAccountBal +recipientInitialBal,
-            "new account bal is initial bal + the deleted account's closing bal "
+            "new recipientAccount bal is its initial bal + the deleted account's closing bal "
            );
     })    
 });
