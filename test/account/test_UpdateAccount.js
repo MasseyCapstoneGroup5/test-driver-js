@@ -2,7 +2,10 @@ import {JSONRPClient} from "../../client.js";
 import {Client, AccountInfoQuery } from "@hashgraph/sdk";
 import {expect, assert} from "chai";
 
-let getAccountInf;
+let newAccountId;
+let newPrivateKey;
+let initialMemo;
+let updatedMemo;
 
 // generate a memo of five random char / nums
 const newRandomMemo = Math.random().toString(36).slice(-5);
@@ -24,41 +27,64 @@ const newRandomMemo = Math.random().toString(36).slice(-5);
     after(async function () {
         await JSONRPClient.request("reset")
     });
+    
+    // create a new account for update of memo field testing
+    it('should create a new account', async function () {
+        // Generate new private & public key
+        newPrivateKey = await JSONRPClient.request("generatePrivateKey", {})
+        let newPublicKey = await JSONRPClient.request("generatePublicKey", {
+            "privateKey": newPrivateKey
+        });
 
-    // Test
+        // CreateAccount with the JSON-RPC
+        newAccountId = await JSONRPClient.request("createAccount", {
+            "publicKey": newPublicKey
+        });
+    });
+
+    // Retrieve initial (default) memo value of newly created account
+    it('should get initial memo value', async function () {
+        let newAccountInfo = await JSONRPClient.request("getAccountInfo", {
+            "accountId": newAccountId
+        });
+        initialMemo = newAccountInfo.accountMemo;
+    });   
+
+    // change value in memo field to a random five-character string
     it('should update memo on an account', async function () {
         // TODO optional create new account without a memo instead of using a random memo value
 
-        // add a memo to the AccountInfo
         await JSONRPClient.request("updateAccount", {
-            "accountId": process.env.OPERATOR_ACCOUNT_ID,
-            "key": process.env.OPERATOR_ACCOUNT_PRIVATE_KEY,
+            "accountId": newAccountId,
+            "key": newPrivateKey,
             "memo": newRandomMemo
         })
 
-        // Check if memo has changed using the JS SDK Client
+        // Use the JS SDK Client to retrive memo field of new account
         const SDKClient = Client.forTestnet();
         SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
-        getAccountInf = await new AccountInfoQuery()
-        .setAccountId(process.env.OPERATOR_ACCOUNT_ID)
+        const getAccountInfo = await new AccountInfoQuery()
+        .setAccountId(newAccountId)
         .execute(SDKClient);   
 
-        // Check if memo field was successfully updated
-        expect(getAccountInf.accountMemo).to.equal(newRandomMemo);
+        updatedMemo = getAccountInfo.accountMemo;
+
+        // Check if memo was successfully updated
+        expect(updatedMemo).to.equal(newRandomMemo);
     })
 
     // Another test in the same suite
-    it('test memo is not the initial default value', async function () {
+    it('test initial memo was set to default value for new account', async function () {
         const emptyMemoStr = '';
-        assert.notEqual(getAccountInf.accountMemo, emptyMemoStr);
+        assert.strictEqual(initialMemo, emptyMemoStr);
     })
     it('test updated accountMemo is the same as set memo value', async function () {
-        assert.strictEqual(getAccountInf.accountMemo, newRandomMemo);
+        assert.strictEqual(updatedMemo, newRandomMemo);
     })
-    it('test memo is still set as a string value ', async function () {
-        assert.isString(getAccountInf.accountMemo);
+    it('test initial memo and updated memo are string value ', async function () {
+        assert.isString(initialMemo, updatedMemo);
     })
-    it('test memo string length = 5', async function () {
-        assert.lengthOf(getAccountInf.accountMemo, 5);
+    it('test the updated memo is nopt the initial memo', async function () {
+        assert.notEqual(updatedMemo, initialMemo);
     })
 });
