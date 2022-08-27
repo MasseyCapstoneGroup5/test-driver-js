@@ -74,7 +74,7 @@ let newPublicKey;
             "newPrivateKey": newPvtKey
         })
 
-        // Use the JS SDK Client to retrive memo field of new account
+        // Use the JS SDK Client to retrieve updated key field of account
         const SDKClient = Client.forTestnet();
         SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
         const getAccountInfo = await new AccountInfoQuery()
@@ -89,5 +89,11 @@ let newPublicKey;
             .to.equal(
                 JSON.stringify(PublicKey.fromString(newPublicKey))
             );
+    })
+    // Another test in the same suite
+    it('test that the two public keys were not the same', async function () {
+        //console.log(typeof(JSON.stringify(firstPublicKey)) + "  " + JSON.stringify(firstPublicKey));
+        //console.log(typeof(JSON.stringify(newPublicKey)) + "  " + JSON.stringify(newPublicKey));
+        assert.notEqual(JSON.stringify(firstPublicKey), JSON.stringify(newPublicKey));
     })
 });
