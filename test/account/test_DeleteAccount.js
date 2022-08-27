@@ -77,10 +77,11 @@ let recipientFinalBal;
             "recipientId": recipientAccountId            
         })
         // Check if deleted account's ID has been removed
+        // console.log(deletedAccountId);
         expect(deletedAccountId.accountId).to.equal(null);
     });
     /**
-    * Further tests for accountId on Testnet will throw failed precheck error: ACCOUNT_DELETED
+    * Further tests for newAccountId on Testnet will throw failed precheck error: ACCOUNT_DELETED
     * Instead -> test for transfer of newAccount's closing balance to recipientAccount
     */
     it('test recipientAccount received closing balance', async function () {
@@ -91,11 +92,21 @@ let recipientFinalBal;
         .setAccountId(recipientAccountId)
         .execute(SDKClient); 
 
-        recipientFinalBal = BigInt(getAccountInf.balance._valueInTinybar); 
-
+        recipientFinalBal = BigInt(getAccountInf.balance._valueInTinybar);         
         // Check if recipient's balance was successfully increased by amount of deleted account's balance
         assert.strictEqual(recipientFinalBal, newAccountBal +recipientInitialBal,
             "new recipientAccount bal is its initial bal + the deleted account's closing bal "
            );
-    })    
+        assert.isFalse(getAccountInf.isDeleted);
+    })  
+    
+    it('test newAccount is deleted', async function () {
+        const SDKClient = Client.forTestnet();
+        SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
+        const query = new AccountInfoQuery()
+        .setAccountId(newAccountId);
+        const accountInfo = await query.execute(SDKClient);
+        assert.isTrue(accountInfo.isDeleted);
+    }) 
+
 });
