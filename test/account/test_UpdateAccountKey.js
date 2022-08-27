@@ -8,7 +8,7 @@ let newPvtKey;
 let firstPublicKey;
 let newPublicKey;
 /**
- * Test update account and compare results with js SDK
+ * Test to update the PUBLIC KEY on account and compare results with js SDK
  */
  describe('#updateAccount()', function () { 
     this.timeout(10000); 
@@ -65,7 +65,7 @@ let newPublicKey;
                 );
     });    
 
-    // update key on account
+    // update the PUBLIC KEY key on account
     it('should update key on an account', async function () {
         await JSONRPClient.request("updateAccountKey", {
             "accountId": accountId,
