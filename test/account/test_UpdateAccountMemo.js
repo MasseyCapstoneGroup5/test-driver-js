@@ -54,7 +54,7 @@ const newRandomMemo = Math.random().toString(36).slice(-5);
     it('should update memo on an account', async function () {
         // TODO optional create new account without a memo instead of using a random memo value
 
-        await JSONRPClient.request("updateAccount", {
+        await JSONRPClient.request("updateAccountMemo", {
             "accountId": newAccountId,
             "key": newPrivateKey,
             "memo": newRandomMemo
