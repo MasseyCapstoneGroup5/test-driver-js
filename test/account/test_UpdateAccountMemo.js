@@ -1,5 +1,5 @@
 import {JSONRPClient} from "../../client.js";
-import {Client, AccountInfoQuery } from "@hashgraph/sdk";
+import {getInfoFromTestnet} from "../../testnetEnquiry.js";
 import {expect, assert} from "chai";
 
 let newAccountId;
@@ -13,7 +13,7 @@ const newRandomMemo = Math.random().toString(36).slice(-5);
 /**
  * Test update account and compare results with js SDK
  */
- describe('#updateAccount()', function () { 
+ describe('#updateAccountMemo()', function () { 
     this.timeout(10000); 
 
     // before and after hooks (normally used to set up and reset the client SDK)
@@ -28,7 +28,7 @@ const newRandomMemo = Math.random().toString(36).slice(-5);
         await JSONRPClient.request("reset")
     });
     
-    // create a new account for update of memo field testing
+    // create a new account via JSON-RPC server for update of memo field testing
     it('should create a new account via JSON-RPC server', async function () {
         // Generate new private & public key
         newPrivateKey = await JSONRPClient.request("generatePrivateKey", {})
@@ -42,19 +42,14 @@ const newRandomMemo = Math.random().toString(36).slice(-5);
         });
     });
 
-    // Retrieve initial (default) memo value of newly created account
+    // Retrieve initial (default) memo value of newly created account from Testnet
     it('should get initial memo value using Testnet', async function () {
         // Use the JS SDK Client to retrieve default memo from new account
-        const SDKClient = Client.forTestnet();
-        SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
-        const getAccountInfo = await new AccountInfoQuery()
-        .setAccountId(newAccountId)
-        .execute(SDKClient);   
-
+        let getAccountInfo = await getInfoFromTestnet(newAccountId);
         initialMemo = getAccountInfo.accountMemo;
     });   
 
-    // change value in memo field to a random five-character string
+    // change value in memo field to a random five-character string via JSON-RPC
     it('should update memo on an account via JSON-RPC server', async function () {
         // TODO optional create new account without a memo instead of using a random memo value
 
@@ -67,12 +62,7 @@ const newRandomMemo = Math.random().toString(36).slice(-5);
 
     it('should verify memo was updated on Testnet', async function () {
         // Use the JS SDK Client to retrieve memo field of new account
-        const SDKClient = Client.forTestnet();
-        SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
-        const getAccountInfo = await new AccountInfoQuery()
-        .setAccountId(newAccountId)
-        .execute(SDKClient);   
-
+        let getAccountInfo = await getInfoFromTestnet(newAccountId);
         updatedMemo = getAccountInfo.accountMemo;
 
         // Check if memo was successfully updated

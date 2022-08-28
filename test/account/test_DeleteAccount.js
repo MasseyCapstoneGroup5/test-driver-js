@@ -1,5 +1,5 @@
 import {JSONRPClient} from "../../client.js";
-import {Client, AccountInfoQuery} from "@hashgraph/sdk";
+import {getInfoFromTestnet, getBalanceFromTestnet} from "../../testnetEnquiry.js";
 import {assert, expect} from "chai";
 
 let newAccountId;
@@ -55,15 +55,13 @@ let recipientFinalBal;
     });
     
     it('should get initial balance of newAccount from Testnet', async function () {
-        let accountInf = await getInfoFromTestnet(newAccountId);
-        let balanceInTinybars = Number(accountInf.balance._valueInTinybar);
-        newAccountBal = BigInt(balanceInTinybars);
+        let accountBalance = await getBalanceFromTestnet(newAccountId); 
+        newAccountBal  = BigInt(Number(accountBalance.hbars._valueInTinybar));
     });
 
     it('should get initial balance of recipientAccount from Testnet', async function () {
-        let accountInf = await getInfoFromTestnet(recipientAccountId);
-        let balanceInTinybars = Number(accountInf.balance._valueInTinybar);
-        recipientInitialBal = BigInt(balanceInTinybars);    
+        let accountBalance = await getBalanceFromTestnet(recipientAccountId); 
+        recipientInitialBal  = BigInt(Number(accountBalance.hbars._valueInTinybar));  
     }); 
 
     it('should delete newAccount and transfer its balance to recipientAccount', async function () {
@@ -81,9 +79,8 @@ let recipientFinalBal;
     * Instead -> test for transfer of newAccount's closing balance to recipientAccount
     */
     it('check via Testnet that recipientAccount received closing balance', async function () {
-        let accountInf = await getInfoFromTestnet(recipientAccountId);
-        let balanceInTinybars = Number(accountInf.balance._valueInTinybar);
-        recipientFinalBal = BigInt(balanceInTinybars);
+        let accountBalance = await getBalanceFromTestnet(recipientAccountId); 
+        recipientFinalBal  = BigInt(Number(accountBalance.hbars._valueInTinybar)); 
       
         // Check if recipient's balance was successfully increased by amount of deleted account's balance
         assert.strictEqual(recipientFinalBal, newAccountBal +recipientInitialBal,
@@ -95,15 +92,4 @@ let recipientFinalBal;
         let accountInfo = await getInfoFromTestnet(newAccountId);
         assert.isTrue(accountInfo.isDeleted);
     }) 
-
-    async function getInfoFromTestnet(accountID) {
-        // Use the JS SDK Client to retrieve account information
-        const SDKClient = Client.forTestnet();
-        SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
-        const accountInfo = await new AccountInfoQuery()
-        .setAccountId(accountID)
-        .execute(SDKClient);   
-
-        return accountInfo;
-    }
 });

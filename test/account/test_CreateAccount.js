@@ -1,5 +1,5 @@
 import {JSONRPClient} from "../../client.js";
-import {AccountBalanceQuery, Client} from "@hashgraph/sdk";
+import {getBalanceFromTestnet} from "../../testnetEnquiry.js";
 import {expect} from "chai";
 
 /**
@@ -33,12 +33,9 @@ describe('#createAccount()', function () {
         });
 
         // Check if account has been created and has 1000 tinyBar using the JS SDK Client
-        const SDKClient = Client.forTestnet();
-        SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
-        const accountBalance = await new AccountBalanceQuery()
-            .setAccountId(newAccountId)
-            .execute(SDKClient);
-        const accountBalanceTinybars = accountBalance.hbars.toTinybars().toInt(); // TODO: use Longs correctly instead of converting to Int
-        expect(accountBalanceTinybars).to.equal(1000); // TODO add initial amount as parameter in createAccount
+        let accountBalance = await getBalanceFromTestnet(newAccountId); 
+        let accountBalanceTinybars  = BigInt(Number(accountBalance.hbars._valueInTinybar));
+        // TODO: use Longs correctly instead of converting to Int
+        expect(accountBalanceTinybars).to.equal(1000n); // TODO add initial amount as parameter in createAccount
     })
 });

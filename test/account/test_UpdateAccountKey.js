@@ -1,5 +1,6 @@
 import {JSONRPClient} from "../../client.js";
-import {Client, AccountInfoQuery, PublicKey } from "@hashgraph/sdk";
+import {PublicKey } from "@hashgraph/sdk";
+import {getInfoFromTestnet} from "../../testnetEnquiry.js";
 import {expect, assert} from "chai";
 
 let accountId;
@@ -8,9 +9,9 @@ let newPvtKey;
 let firstPublicKey;
 let newPublicKey;
 /**
- * Test to update the PUBLIC KEY on account and compare results with js SDK
+ * Test to update the Public and Private keys on an account and compare results with js SDK
  */
- describe('#updateAccount()', function () { 
+ describe('#updateAccountKey()', function () { 
     this.timeout(10000); 
 
     before(async function () {
@@ -24,7 +25,7 @@ let newPublicKey;
         await JSONRPClient.request("reset")
     });
 
-    // create a first set of Public / Private keys for testing update of keys
+    // create a first set of Public / Private keys via JSON-RPC server for testing update of keys
     it('should create a new key set', async function () {
         firstPvtKey = await JSONRPClient.request("generatePrivateKey", {})
         firstPublicKey = await JSONRPClient.request("generatePublicKey", {
@@ -40,21 +41,16 @@ let newPublicKey;
         })
     });
    
-    // create a new account using first public / private key set
+    // create a new account using JSON-RPC using first public / private key set
     it('should create a new account', async function () {
         accountId = await JSONRPClient.request("createAccount", {
             "publicKey": firstPublicKey
         })
     });    
 
-    it('should get first public key of newly created account', async function () {
+    it('should retrieve first public key of newly created account via Testnet', async function () {
         // Use the JS SDK Client to retrive public key of new account
-        const SDKClient = Client.forTestnet();
-        SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
-        const getAccountInfo = await new AccountInfoQuery()
-        .setAccountId(accountId)
-        .execute(SDKClient);   
-
+        let getAccountInfo = await getInfoFromTestnet(accountId);
         let firstKeySet = getAccountInfo.key;        
 
         // Check if public key was successfully set
@@ -65,7 +61,7 @@ let newPublicKey;
                 );
     });    
 
-    // update the PUBLIC KEY key on account
+    // update the PUBLIC & PRIVATE KEY SET on account via JSON-RPC
     it('should update key on an account', async function () {
         await JSONRPClient.request("updateAccountKey", {
             "accountId": accountId,
@@ -75,12 +71,7 @@ let newPublicKey;
         })
 
         // Use the JS SDK Client to retrieve updated key field of account
-        const SDKClient = Client.forTestnet();
-        SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
-        const getAccountInfo = await new AccountInfoQuery()
-        .setAccountId(accountId)
-        .execute(SDKClient);   
-
+        let getAccountInfo = await getInfoFromTestnet(accountId);
         let updatedPublicKey = getAccountInfo.key;
 
         // Check that key was successfully updated
