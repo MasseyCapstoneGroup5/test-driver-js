@@ -91,12 +91,8 @@ let recipientFinalBal;
            );
     })  
     
-    it('test newAccount is deleted', async function () {
-        const SDKClient = Client.forTestnet();
-        SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
-        const query = new AccountInfoQuery()
-        .setAccountId(newAccountId);
-        const accountInfo = await query.execute(SDKClient);
+    it('test via Testnet that newAccount is deleted', async function () {
+        let accountInfo = await getInfoFromTestnet(newAccountId);
         assert.isTrue(accountInfo.isDeleted);
     }) 
 
