@@ -62,14 +62,16 @@ let newPublicKey;
     });    
 
     // update the PUBLIC & PRIVATE KEY SET on account via JSON-RPC
-    it('should update key on an account', async function () {
+    it('should update key on an account via JSON-RPC server', async function () {
         await JSONRPClient.request("updateAccountKey", {
             "accountId": accountId,
             "newPublicKey": newPublicKey,
             "oldPrivateKey": firstPvtKey,
             "newPrivateKey": newPvtKey
         })
+    });
 
+    it('verify from Testnet that key set updated', async function () {
         // Use the JS SDK Client to retrieve updated key field of account
         let getAccountInfo = await getInfoFromTestnet(accountId);
         let updatedPublicKey = getAccountInfo.key;
