@@ -29,7 +29,7 @@ const newRandomMemo = Math.random().toString(36).slice(-5);
     });
     
     // create a new account for update of memo field testing
-    it('should create a new account', async function () {
+    it('should create a new account via JSON-RPC server', async function () {
         // Generate new private & public key
         newPrivateKey = await JSONRPClient.request("generatePrivateKey", {})
         let newPublicKey = await JSONRPClient.request("generatePublicKey", {
@@ -43,15 +43,19 @@ const newRandomMemo = Math.random().toString(36).slice(-5);
     });
 
     // Retrieve initial (default) memo value of newly created account
-    it('should get initial memo value', async function () {
-        let newAccountInfo = await JSONRPClient.request("getAccountInfo", {
-            "accountId": newAccountId
-        });
-        initialMemo = newAccountInfo.accountMemo;
+    it('should get initial memo value using Testnet', async function () {
+        // Use the JS SDK Client to retrieve default memo from new account
+        const SDKClient = Client.forTestnet();
+        SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
+        const getAccountInfo = await new AccountInfoQuery()
+        .setAccountId(newAccountId)
+        .execute(SDKClient);   
+
+        initialMemo = getAccountInfo.accountMemo;
     });   
 
     // change value in memo field to a random five-character string
-    it('should update memo on an account', async function () {
+    it('should update memo on an account via JSON-RPC server', async function () {
         // TODO optional create new account without a memo instead of using a random memo value
 
         await JSONRPClient.request("updateAccountMemo", {
@@ -59,8 +63,10 @@ const newRandomMemo = Math.random().toString(36).slice(-5);
             "key": newPrivateKey,
             "memo": newRandomMemo
         })
+    });
 
-        // Use the JS SDK Client to retrive memo field of new account
+    it('should verify memo was updated on Testnet', async function () {
+        // Use the JS SDK Client to retrieve memo field of new account
         const SDKClient = Client.forTestnet();
         SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
         const getAccountInfo = await new AccountInfoQuery()
@@ -71,7 +77,7 @@ const newRandomMemo = Math.random().toString(36).slice(-5);
 
         // Check if memo was successfully updated
         expect(updatedMemo).to.equal(newRandomMemo);
-    })
+    });
 
     // Another test in the same suite
     it('test initial memo was set to default value for new account', async function () {
