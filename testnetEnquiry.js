@@ -1,7 +1,7 @@
 import {Client, AccountInfoQuery, AccountBalanceQuery} from "@hashgraph/sdk";
 
 export async function getBalanceFromTestnet(accountID) {
-    // Use the JS SDK Client to retrieve account information
+    // Use the JS SDK Client to retrieve account balance
     const SDKClient = Client.forTestnet();
     SDKClient.setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
     const accountBalance = new AccountBalanceQuery()
