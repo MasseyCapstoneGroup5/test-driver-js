@@ -1,47 +1,41 @@
 import {JSONRPClient} from "./client.js";
 
-let genPrivateKey;
-let id;
-
-export async function generateAccountKey() {
+export async function generateAccountKeys() {
     // Generate new private & public key
-    genPrivateKey = await JSONRPClient.request("generatePrivateKey", {})
-    let genPublicKey = await JSONRPClient.request("generatePublicKey", {
-        "privateKey": genPrivateKey
+    let privateKey = await JSONRPClient.request("generatePrivateKey", {})
+    let publicKey = await JSONRPClient.request("generatePublicKey", {
+        "privateKey": privateKey
     })    
-    return genPublicKey;    
-};
+    return {
+        "publicKey": publicKey,
+        "privateKey": privateKey
+    };
+}
 
-export async function createTestAccount(publicKey, initialBal) {   
-    // CreateAccount with the JSON-RPC 
-    let accountId = await JSONRPClient.request("createAccount", {
+export async function createTestAccount(publicKey, initialBal) {
+    // CreateAccount with the JSON-RPC
+    return await JSONRPClient.request("createAccount", {
         "publicKey": publicKey,
         "initialBalance": initialBal
-    })
-    return accountId;    
-};
+    });
+}
 
-export async function setFundingAccount(id, pvtkey) {   
+export async function setFundingAccount(accountId, privateKey) {
     // sets funding and fee-paying account for CRUD ops
     await JSONRPClient.request("setup", {
-        "operatorAccountId": id,
-        "operatorPrivateKey": pvtkey
-    })    
-};
-
-export async function createAccountAsFundingAccount(initBal) {  
-    // creates a test account with new public and private key
-    let publicKey = await generateAccountKey();
-    id = await createTestAccount(publicKey, initBal);
-    await JSONRPClient.request("setup", {
-        "operatorAccountId": id,
-        "operatorPrivateKey": genPrivateKey
-    })    
-};
-
-export async function getPvtKey() {
-    return genPrivateKey;
+        "operatorAccountId": accountId,
+        "operatorPrivateKey": privateKey
+    })
 }
-export async function getId() {
-    return id;
+
+export async function createAccountAsFundingAccount(initialBalance) {
+    // creates a new test account with new public and private key
+    const {publicKey, privateKey} = await generateAccountKeys();
+    const accountId = await createTestAccount(publicKey, initialBalance);
+    await setFundingAccount(accountId, privateKey)
+    return {
+        "accountId": accountId,
+        "publicKey": publicKey,
+        "privateKey": privateKey
+    };
 }
