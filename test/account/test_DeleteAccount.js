@@ -89,7 +89,12 @@ let recipientFinalBal;
     })  
     
     it('test via Testnet that newAccount is deleted', async function () {
-        let accountInfo = await getInfoFromTestnet(newAccountId);
-        assert.isTrue(accountInfo.isDeleted);
-    }) 
+        try {
+            await getInfoFromTestnet(newAccountId);
+        } catch (err) {
+            assert.include(err.message, 'ACCOUNT_DELETED');
+            return
+        }
+        assert.isOk(false, 'getInfoFromTestnet must throw error')
+    })
 });
