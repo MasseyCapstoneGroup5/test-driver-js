@@ -1,4 +1,4 @@
-import {JSONRPClient} from "../client.js";
+import {JSONRPCRequest} from "../client.js";
 import {Client} from "@hashgraph/sdk";
 import {expect} from "chai";
 
@@ -10,14 +10,14 @@ describe('#functionalityWeWantToTest()', function () { // a suite of tests
 
     // before and after hooks (normally used to set up and reset the client SDK)
     before(async function () {
-        await JSONRPClient.request("setup", {
+        await JSONRPCRequest("setup", {
                 "operatorAccountId": process.env.OPERATOR_ACCOUNT_ID,
                 "operatorPrivateKey": process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
             }
         )
     });
     after(async function () {
-        await JSONRPClient.request("reset")
+        await JSONRPCRequest("reset")
     });
 
     // Before/after each test can also be used
@@ -29,7 +29,7 @@ describe('#functionalityWeWantToTest()', function () { // a suite of tests
     it('should do something', async function () {
 
         // Call JSON-RPC (Make sure it is running first)
-        /*let result = await JSONRPClient.request("doSomething", {
+        /*let result = await JSONRPCRequest("doSomething", {
             "parameter": "value"
         })*/
 

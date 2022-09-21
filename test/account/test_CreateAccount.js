@@ -1,4 +1,4 @@
-import {JSONRPClient} from "../../client.js";
+import {JSONRPCRequest} from "../../client.js";
 import {getBalanceFromTestnet} from "../../testnetEnquiry.js";
 import {
     createAccountAsFundingAccount,
@@ -15,7 +15,7 @@ describe('#createAccount()', function () {
     this.timeout(15000);
 
     after(async function () {
-        await JSONRPClient.request("reset")
+        await JSONRPCRequest("reset")
     });
 
     it('should test invalid initial balance', async function () {
@@ -90,9 +90,7 @@ describe('#createAccount()', function () {
             } catch (err) {
                 // If error is thrown then check error message contains the expected value from
                 // the key value pairs
-                //console.log(err.message)
                 assert.include(err.message, value, 'error message contains value substring');
-                console.log("ERR " + value);
             }
         }
     })

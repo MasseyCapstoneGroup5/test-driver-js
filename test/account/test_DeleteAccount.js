@@ -1,4 +1,4 @@
-import {JSONRPClient} from "../../client.js";
+import {JSONRPCRequest} from "../../client.js";
 import {getInfoFromTestnet, getBalanceFromTestnet} from "../../testnetEnquiry.js";
 import {assert, expect} from "chai";
 
@@ -20,36 +20,36 @@ let recipientFinalBal;
     this.timeout(10000);
 
     before(async function generateAccountId() {
-        await JSONRPClient.request("setup", {
+        await JSONRPCRequest("setup", {
                 "operatorAccountId": process.env.OPERATOR_ACCOUNT_ID,
                 "operatorPrivateKey": process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
             }
         )
     });
     after(async function () {
-        await JSONRPClient.request("reset")
+        await JSONRPCRequest("reset")
     });
 
     it('should create newAccount via JSON-RPC server', async function () {
         // Generate new private & public key
-        newAccountPrivateKey = await JSONRPClient.request("generatePrivateKey", {})
-        let newPublicKey = await JSONRPClient.request("generatePublicKey", {
+        newAccountPrivateKey = await JSONRPCRequest("generatePrivateKey", {})
+        let newPublicKey = await JSONRPCRequest("generatePublicKey", {
             "privateKey": newAccountPrivateKey
         });
         //CreateAccount with the JSON-RPC
-        newAccountId = await JSONRPClient.request("createAccount", {
+        newAccountId = await JSONRPCRequest("createAccount", {
             "publicKey": newPublicKey
         });
     });
 
     it('should create recipientAccount via JSON-RPC server', async function () {
         // Generate new private & public key
-        recipientPrivateKey = await JSONRPClient.request("generatePrivateKey", {})
-        let recipientPublicKey = await JSONRPClient.request("generatePublicKey", {
+        recipientPrivateKey = await JSONRPCRequest("generatePrivateKey", {})
+        let recipientPublicKey = await JSONRPCRequest("generatePublicKey", {
             "privateKey": recipientPrivateKey
         });
         //CreateAccount with the JSON-RPC
-        recipientAccountId = await JSONRPClient.request("createAccount", {
+        recipientAccountId = await JSONRPCRequest("createAccount", {
             "publicKey": recipientPublicKey
         });
     });
@@ -66,7 +66,7 @@ let recipientFinalBal;
 
     it('should delete newAccount and transfer its balance to recipientAccount', async function () {
         // Delete newly created account via the JSON-RPC
-        const deletedAccountId = await JSONRPClient.request("deleteAccount", {
+        const deletedAccountId = await JSONRPCRequest("deleteAccount", {
             "accountId": newAccountId,          
             "accountKey": newAccountPrivateKey,  
             "recipientId": recipientAccountId            

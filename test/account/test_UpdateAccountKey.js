@@ -1,4 +1,4 @@
-import {JSONRPClient} from "../../client.js";
+import {JSONRPCRequest} from "../../client.js";
 import {PublicKey } from "@hashgraph/sdk";
 import {getInfoFromTestnet} from "../../testnetEnquiry.js";
 import {expect, assert} from "chai";
@@ -15,35 +15,35 @@ let newPublicKey;
     this.timeout(10000); 
 
     before(async function () {
-        await JSONRPClient.request("setup", {
+        await JSONRPCRequest("setup", {
                 "operatorAccountId": process.env.OPERATOR_ACCOUNT_ID,
                 "operatorPrivateKey": process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
             }
         )
     });
     after(async function () {
-        await JSONRPClient.request("reset")
+        await JSONRPCRequest("reset")
     });
 
     // create a first set of Public / Private keys via JSON-RPC server for testing update of keys
     it('should create a new key set', async function () {
-        firstPvtKey = await JSONRPClient.request("generatePrivateKey", {})
-        firstPublicKey = await JSONRPClient.request("generatePublicKey", {
+        firstPvtKey = await JSONRPCRequest("generatePrivateKey", {})
+        firstPublicKey = await JSONRPCRequest("generatePublicKey", {
             "privateKey": firstPvtKey
         })
     });
 
     // create a second Public / Private key set for testing update of keys
     it('should create a second key set', async function () {
-        newPvtKey = await JSONRPClient.request("generatePrivateKey", {})
-        newPublicKey = await JSONRPClient.request("generatePublicKey", {
+        newPvtKey = await JSONRPCRequest("generatePrivateKey", {})
+        newPublicKey = await JSONRPCRequest("generatePublicKey", {
             "privateKey": newPvtKey
         })
     });
    
     // create a new account using JSON-RPC using first public / private key set
     it('should create a new account', async function () {
-        accountId = await JSONRPClient.request("createAccount", {
+        accountId = await JSONRPCRequest("createAccount", {
             "publicKey": firstPublicKey
         })
     });    
@@ -63,7 +63,7 @@ let newPublicKey;
 
     // update the PUBLIC & PRIVATE KEY SET on account via JSON-RPC
     it('should update key on an account via JSON-RPC server', async function () {
-        await JSONRPClient.request("updateAccountKey", {
+        await JSONRPCRequest("updateAccountKey", {
             "accountId": accountId,
             "newPublicKey": newPublicKey,
             "oldPrivateKey": firstPvtKey,

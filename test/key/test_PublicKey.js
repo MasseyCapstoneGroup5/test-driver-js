@@ -1,4 +1,4 @@
-import {JSONRPClient} from "../../client.js";
+import {JSONRPCRequest} from "../../client.js";
 import {expect} from "chai";
 
 /**
@@ -6,7 +6,7 @@ import {expect} from "chai";
  */
 describe('#generatePublicKey()', function () {
     it('should return the correct public key', async function () {
-        let response = await JSONRPClient.request("generatePublicKey", {
+        let response = await JSONRPCRequest("generatePublicKey", {
                 "privateKey": "302e020100300506032b657004220420c036915d924e5b517fae86ce34d8c76005cb5099798a37a137831ff5e3dc0622 "
             }
         )
