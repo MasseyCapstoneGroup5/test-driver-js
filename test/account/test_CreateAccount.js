@@ -19,12 +19,15 @@ describe('#createAccount()', function () {
     });
 
     it('should test invalid initial balance', async function () {
-
+        /**
+         * Attempt to set negative initial balance
+         * INVALID_INITIAL_BALANCE = 85;
+         **/ 
         // test array could potentially be a json file stored with key value pairs, E.g.
         const testarr1 = {
             "0": "OK",
             "1": "OK",
-            "-1": "INVALID_INITIAL_BALANCE",
+            "-1": "85",
             "-0": "OK",
         };
         await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
@@ -48,18 +51,23 @@ describe('#createAccount()', function () {
                 // If error is thrown then check error message contains the expected value from
                 // the key value pairs
                 // console.log("Error mssge: " + err.message + ". Expected val: " + value);
-                assert.include(err.message, value, 'error message contains value substring');
+                // console.log("Error code: " + err.code);
+                assert.equal(err.code, value, 'error code equals value from testarr1');
                 console.log("ERR " + value);
             }
         }
     })
 
     it('should test insufficient payer balance', async function () {
+        /**
+         * The payer account has insufficient cryptocurrency to pay the transaction fee
+         * INSUFFICIENT_PAYER_BALANCE = 10;
+        **/
         // boundary testing sufficient payer balance
         const initialBalance = 500000000;
         const testarr2 = {
             "400000000": "OK",
-            "500000001": "INSUFFICIENT_PAYER_BALANCE"
+            "500000001": "10"
         };
 
         // Select key value pairs from test array 2
@@ -90,7 +98,7 @@ describe('#createAccount()', function () {
             } catch (err) {
                 // If error is thrown then check error message contains the expected value from
                 // the key value pairs
-                assert.include(err.message, value, 'error message contains value substring');
+                assert.equal(err.code, value, 'error code equals value from testarr2');
             }
         }
     })
