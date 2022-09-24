@@ -12,7 +12,6 @@ Enter Project directory
     
 Get a Hedera testnet account ID and private key from Hedera [here](https://portal.hedera.com/register) 
 
-* Rename `.env.template` to `.env`
 * Add account ID and private key to `.env`
 
 

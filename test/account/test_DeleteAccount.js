@@ -96,7 +96,7 @@ let recipientFinalBal;
         try {
             await getInfoFromTestnet(newAccountId);
         } catch (err) {
-            assert.include(err.message, 'ACCOUNT_DELETED');
+            assert.equal(err.status._code, 72, 'error code equals 72 (ACCOUNT_DELETED)');
             return
         }
         assert.isOk(false, 'getInfoFromTestnet must throw error')
