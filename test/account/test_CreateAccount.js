@@ -27,6 +27,7 @@ describe('#createAccount()', function () {
         const testarr1 = {
             "0": "OK",
             "1": "OK",
+            "100": "OK",
             "-1": "85",
             "-0": "OK",
         };

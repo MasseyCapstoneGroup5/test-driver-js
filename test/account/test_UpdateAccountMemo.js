@@ -1,19 +1,16 @@
 import {JSONRPCRequest} from "../../client.js";
 import {getInfoFromTestnet} from "../../testnetEnquiry.js";
+import {updateAccountMemo} from "../../generateUpdates.js";
 import {expect, assert} from "chai";
 
 let newAccountId;
 let newPrivateKey;
-let initialMemo;
-let updatedMemo;
-
-// generate a memo of five random char / nums
-const newRandomMemo = Math.random().toString(36).slice(-5);
-
+let memostring;                 // randomly generated memos of 100 or 101 char / nums
+let initialMemo, updatedMemo;   // test for change from initial to updated memo on an account
 /**
- * Test update account and compare results with js SDK
+ * Test update of account memo and compare results with js SDK
  */
- describe('#updateAccountMemo()', function () { 
+ describe('#updateAccountMemo()', function () {     
     this.timeout(10000); 
 
     // before and after hooks (normally used to set up and reset the client SDK)
@@ -50,23 +47,42 @@ const newRandomMemo = Math.random().toString(36).slice(-5);
     });   
 
     // change value in memo field to a random five-character string via JSON-RPC
-    it('should update memo on an account via JSON-RPC server', async function () {
+    it('should test memo field is too long', async function () {        
         // TODO optional create new account without a memo instead of using a random memo value
+        /**
+         * Transaction memo size exceeded 100 bytes
+         * MEMO_TOO_LONG = 8;
+         */
+         const testarr = {
+            "100": "OK",
+            "101": "8",
+        };
+        for (const [key, value] of Object.entries(testarr)) {  
+            try {
+                memostring = await generateLongString(key);
+                await updateAccountMemo(newAccountId, newPrivateKey, memostring);               
 
-        await JSONRPCRequest("updateAccountMemo", {
-            "accountId": newAccountId,
-            "key": newPrivateKey,
-            "memo": newRandomMemo
-        })
+                expect(value).to.equal("OK");
+
+            } catch(err) {
+                // If error is thrown then check error message contains the expected status code
+                //console.log("ERR " + value);
+                assert.equal(err.code, value, 'error code is for MEMO_TOO_LONG');
+            }           
+        }        
     });
 
     it('should verify memo was updated on Testnet', async function () {
+        // update memo on account
+        memostring = await generateLongString(99);
+        await updateAccountMemo(newAccountId, newPrivateKey, memostring);
+
         // Use the JS SDK Client to retrieve memo field of new account
         let getAccountInfo = await getInfoFromTestnet(newAccountId);
         updatedMemo = getAccountInfo.accountMemo;
 
         // Check if memo was successfully updated
-        expect(updatedMemo).to.equal(newRandomMemo);
+        expect(updatedMemo).to.equal(memostring);
     });
 
     // Another test in the same suite
@@ -75,12 +91,22 @@ const newRandomMemo = Math.random().toString(36).slice(-5);
         assert.strictEqual(initialMemo, emptyMemoStr);
     })
     it('test updated accountMemo is the same as set memo value', async function () {
-        assert.strictEqual(updatedMemo, newRandomMemo);
+        assert.strictEqual(updatedMemo, memostring);
     })
     it('test initial memo and updated memo are string value ', async function () {
-        assert.isString(initialMemo, updatedMemo);
+        assert.isString(initialMemo, memostring);
     })
     it('test the updated memo is nopt the initial memo', async function () {
-        assert.notEqual(updatedMemo, initialMemo);
-    })
+        assert.notEqual(memostring, initialMemo);
+    })  
 });
+
+async function generateLongString(numRepetitions) {
+    // keeps concatenating one-character strings to make longer string
+    let longString = ""
+    for(let i=0; i<numRepetitions; i++) {
+        let genLongStr = Math.random().toString(36).slice(-1);
+        longString += genLongStr;
+    }        
+    return longString;
+}

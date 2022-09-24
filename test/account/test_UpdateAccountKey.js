@@ -1,13 +1,14 @@
 import {JSONRPCRequest} from "../../client.js";
 import {PublicKey } from "@hashgraph/sdk";
 import {getInfoFromTestnet} from "../../testnetEnquiry.js";
+import {updateAccountKey} from "../../generateUpdates.js";
 import {expect, assert} from "chai";
 
 let accountId;
-let firstPvtKey;
-let newPvtKey;
-let firstPublicKey;
-let newPublicKey;
+let firstPvtKey, firstPublicKey;    // generate first pair of keys for new account
+let newPvtKey, newPublicKey;        // generate second pair of keys to test replacing keys
+let randomPvtKey, randomPublicKey;  // a random pair to test authorisation failure for replacement
+
 /**
  * Test to update the Public and Private keys on an account and compare results with js SDK
  */
@@ -40,6 +41,14 @@ let newPublicKey;
             "privateKey": newPvtKey
         })
     });
+
+    // create a third Public / Private key set for testing invalid authorisation
+    it('should create a second key set', async function () {
+        randomPvtKey = await JSONRPCRequest("generatePrivateKey", {})
+        randomPublicKey = await JSONRPCRequest("generatePublicKey", {
+            "privateKey": randomPvtKey
+        })
+    });
    
     // create a new account using JSON-RPC using first public / private key set
     it('should create a new account', async function () {
@@ -63,12 +72,22 @@ let newPublicKey;
 
     // update the PUBLIC & PRIVATE KEY SET on account via JSON-RPC
     it('should update key on an account via JSON-RPC server', async function () {
-        await JSONRPCRequest("updateAccountKey", {
-            "accountId": accountId,
-            "newPublicKey": newPublicKey,
-            "oldPrivateKey": firstPvtKey,
-            "newPrivateKey": newPvtKey
-        })
+        await updateAccountKey(accountId, newPublicKey, firstPvtKey, newPvtKey);        
+    });
+
+    // update the PUBLIC & PRIVATE KEY SET on account via JSON-RPC
+    it('should test transaction signature', async function () {
+        /**
+         * The transaction signature is not valid
+         * INVALID_SIGNATURE = 7;
+         */  
+        try {
+            await updateAccountKey(accountId, newPublicKey, firstPvtKey, newPvtKey); 
+            
+        } catch(err) {
+            // If error is thrown then check error contains expected status message
+            assert.equal(err.code, 7, 'error code is for INVALID_SIGNATURE');
+        }        
     });
 
     it('verify from Testnet that key set updated', async function () {

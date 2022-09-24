@@ -89,6 +89,10 @@ let recipientFinalBal;
     })  
     
     it('test via Testnet that newAccount is deleted', async function () {
+        /**
+         * the account has been marked as deleted
+         * ACCOUNT_DELETED = 72;
+         **/ 
         try {
             await getInfoFromTestnet(newAccountId);
         } catch (err) {
