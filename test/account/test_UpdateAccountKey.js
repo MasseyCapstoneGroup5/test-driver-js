@@ -90,6 +90,33 @@ let randomPvtKey, randomPublicKey;  // a random pair to test authorisation failu
         }        
     });
 
+    // update the PUBLIC & PRIVATE KEY SET on account via JSON-RPC
+    it('should test for error with transaction signature', async function () {
+        /**
+         * The transaction signature is not valid
+         * INVALID_SIGNATURE = 7;
+         */  
+         let testarr1 = {
+            "keys":[
+              {"key":{newPublicKey}, "status":"OK"},
+              {"key":{randomPublicKey}, "status":"7"}
+            ]
+            };       
+        try {
+            for(let i=0; i<testarr1.keys.length; i++) {
+                let keyName = Object.keys(testarr1.keys[i].key)[0];
+                let keyObj = testarr1.keys[i];
+                let keyStr = keyObj.key[keyName];
+                await updateAccountKey(accountId, keyStr, firstPvtKey, newPvtKey);
+                console.log("OK");
+            }           
+        } catch(err) {
+            // If error is thrown then check error contains expected status message
+            console.log("ERR" + err.code);
+            assert.equal(err.code, 7, 'error code is for INVALID_SIGNATURE');
+        }        
+    });
+
     it('verify from Testnet that key set updated', async function () {
         // Use the JS SDK Client to retrieve updated key field of account
         let getAccountInfo = await getInfoFromTestnet(accountId);
