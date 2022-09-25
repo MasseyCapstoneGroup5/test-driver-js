@@ -66,6 +66,7 @@ let recipientFinalBal;
 
     it('should delete newAccount and transfer its balance to recipientAccount', async function () {
         // Delete newly created account via the JSON-RPC
+        console.log("\nDeleting account " + newAccountId);
         const deletedAccountId = await JSONRPCRequest("deleteAccount", {
             "accountId": newAccountId,          
             "accountKey": newAccountPrivateKey,  
@@ -94,9 +95,11 @@ let recipientFinalBal;
          * ACCOUNT_DELETED = 72;
          **/ 
         try {
+            console.log("\nTry to enquire on account " + newAccountId);
             await getInfoFromTestnet(newAccountId);
         } catch (err) {
             assert.equal(err.status._code, 72, 'error code equals 72 (ACCOUNT_DELETED)');
+            console.log("ERR " + err.status._code);
             return
         }
         assert.isOk(false, 'getInfoFromTestnet must throw error')

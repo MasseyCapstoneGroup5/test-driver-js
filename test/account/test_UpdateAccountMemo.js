@@ -60,14 +60,16 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
         for (const [key, value] of Object.entries(testarr)) {  
             try {
                 memostring = await generateLongString(key);
+                console.log("\nMemo length = " + key);
                 await updateAccountMemo(newAccountId, newPrivateKey, memostring);               
-
                 expect(value).to.equal("OK");
+                console.log("OK " + value);
 
             } catch(err) {
                 // If error is thrown then check error message contains the expected status code
                 //console.log("ERR " + value);
                 assert.equal(err.code, value, 'error code is for MEMO_TOO_LONG');
+                console.log("ERR " + value);
             }           
         }        
     });
@@ -96,7 +98,7 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
     it('test initial memo and updated memo are string value ', async function () {
         assert.isString(initialMemo, memostring);
     })
-    it('test the updated memo is nopt the initial memo', async function () {
+    it('test the updated memo is not the initial memo', async function () {
         assert.notEqual(memostring, initialMemo);
     })  
 });

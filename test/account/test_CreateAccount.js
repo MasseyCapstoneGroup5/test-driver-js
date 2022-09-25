@@ -51,8 +51,6 @@ describe('#createAccount()', function () {
             } catch (err) {
                 // If error is thrown then check error message contains the expected value from
                 // the key value pairs
-                // console.log("Error mssge: " + err.message + ". Expected val: " + value);
-                // console.log("Error code: " + err.code);
                 assert.equal(err.code, value, 'error code equals value from testarr1');
                 console.log("ERR " + value);
             }
@@ -97,9 +95,10 @@ describe('#createAccount()', function () {
                 expect(value).to.equal("OK");
                 console.log("OK " + value);
             } catch (err) {
-                // If error is thrown then check error message contains the expected value from
+                // If error is thrown then check error code contains the expected value from
                 // the key value pairs
                 assert.equal(err.code, value, 'error code equals value from testarr2');
+                console.log("ERR " + value);
             }
         }
     })

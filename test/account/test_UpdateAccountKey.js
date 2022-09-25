@@ -91,29 +91,33 @@ let randomPvtKey, randomPublicKey;  // a random pair to test authorisation failu
     });
 
     // update the PUBLIC & PRIVATE KEY SET on account via JSON-RPC
-    it('should test for error with transaction signature', async function () {
+    it('should test for error in transaction signature', async function () {
         /**
          * The transaction signature is not valid
          * INVALID_SIGNATURE = 7;
          */  
+         let testStatus;
          let testarr1 = {
-            "keys":[
+            "tests":[
               {"key":{newPublicKey}, "status":"OK"},
               {"key":{randomPublicKey}, "status":"7"}
             ]
             };       
         try {
-            for(let i=0; i<testarr1.keys.length; i++) {
-                let keyName = Object.keys(testarr1.keys[i].key)[0];
-                let keyObj = testarr1.keys[i];
-                let keyStr = keyObj.key[keyName];
+            for(let i=0; i<testarr1.tests.length; i++) {
+                let keyStr = Object.values(testarr1.tests[i].key)[0];
+                console.log("\nPublic Key = " + Object.keys(testarr1.tests[i].key)[0]);
+                let statusStr = Object.values(testarr1.tests[i].status).toString();
+                testStatus = statusStr.replace(/,/g,"")
+
                 await updateAccountKey(accountId, keyStr, firstPvtKey, newPvtKey);
-                console.log("OK");
+                expect(testStatus).to.equal("OK");
+                console.log("OK " + testStatus);
             }           
         } catch(err) {
-            // If error is thrown then check error contains expected status message
-            console.log("ERR" + err.code);
-            assert.equal(err.code, 7, 'error code is for INVALID_SIGNATURE');
+            // If error is thrown then check error contains expected status code            
+            assert.equal(err.code, testStatus, 'error code is for INVALID_SIGNATURE = 7');
+            console.log("ERR " + testStatus);
         }        
     });
 
