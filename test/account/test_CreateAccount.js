@@ -33,8 +33,8 @@ describe('#createAccount()', function () {
 
         let accountID = '0.0.' + query.accountId.num.low;     
         let url = `https://testnet.mirrornode.hedera.com/api/v1/accounts?account.id=${accountID}`;
-        await delay(4000);
-        delay(4000).then(() => console.log('ran after 4 seconds passed'));
+        delay(5000).then(() => console.log('ran after 5 seconds passed'));
+        await delay(5000);
 
         const response = await fetch(url);
         const respJSON = await response.json();   
