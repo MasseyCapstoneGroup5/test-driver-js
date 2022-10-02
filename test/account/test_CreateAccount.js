@@ -1,12 +1,13 @@
 import {JSONRPCRequest} from "../../client.js";
-import {AccountId, Query, AccountInfoQuery} from "@hashgraph/sdk";
-import {getBalanceFromTestnet} from "../../testnetEnquiry.js";
+import {getInfoFromTestnet, getBalanceFromTestnet} from "../../testnetEnquiry.js";
 import {
     createAccountAsFundingAccount,
     createTestAccount,
+    createTestAccountNoKey,
     generateAccountKeys,
     setFundingAccount
 } from "../../generateNewAccount.js";
+import {PublicKey} from "@hashgraph/sdk";
 import fetch from "node-fetch";
 import {assert, expect} from "chai";
 
@@ -25,47 +26,61 @@ describe('#createAccount()', function () {
     it('Creates an account', async function() {
 
         await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);         
-        let {publicKey} = await generateAccountKeys();
-        let newAccountId = await createTestAccount(publicKey, 1000);
+        let {publicKey} = await generateAccountKeys();        
+        let newAccountId = await createTestAccount(publicKey, 1000);     
 
-        const query = new AccountInfoQuery()
-        .setAccountId(newAccountId);
+        const accInf = await getInfoFromTestnet(newAccountId);
 
-        let accountID = '0.0.' + query.accountId.num.low;     
-        let url = `https://testnet.mirrornode.hedera.com/api/v1/accounts?account.id=${accountID}`;
-        delay(5000).then(() => console.log('ran after 5 seconds passed'));
-        await delay(5000);
+        let accountID = '0.0.' + accInf.accountId.num.low;     
+        let url = `https://testnet.mirrornode.hedera.com/api/v1/accounts?account.id=${accountID}`;     
+        await delay(4000);
 
         const response = await fetch(url);
+
         const respJSON = await response.json();   
         const mirrorID = respJSON.accounts[0].account;
 
-        console.log("accountId" + accountID + ' mirrorID ' + mirrorID);
-        //return { "accountId": accountID, "mirrorID": mirrorID };
+        //console.log("accountId" + accountID + ' mirrorID ' + mirrorID);
+
         expect(newAccountId).to.equal(accountID);
         expect(newAccountId).to.equal(mirrorID);      
     })
 
     // Create an account with no public key
     it('Creates an account with no public key', async function(){
-        let testAcct = await createTestAccount(key);
+        /**
+         * Key not provided in the transaction body
+         * KEY_REQUIRED = 26;
+        **/
+        try {
+            await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);      
+            let newAccountId = await createTestAccountNoKey(); 
 
-        expect(testAcctID).to.be.true
+        } catch(err) {
+            assert.equal(err.code, 26, 'error code is KEY_REQUIRED');
+        }       
     })
     // Create an account with an invalid public key
     it('Creates an account with an invalid public key', async function(){
-        let invalidKey = 101010;
-        let testAcct = await createTestAccount(key, invalidKey);
-
-        expect(testAcctID).to.be.false
+        /**
+         * 
+         * 
+        **/
+        try {
+            let invalidKey = "VO5_3QBSXBpVA1LSPdyjRs1cHr3d70bXi2iVwRjQ7DT7-bHmpr5AqNY9g-0=";
+            let testAcct = await createTestAccount(invalidKey, 1000);
+        } catch(err) {
+            console.log("ERR mssge " + err.message + " err code " + err.code);
+            assert.equal(err.code, 60, 'error code is ???');
+        }    
     })
-    it('should test invalid initial balance', async function () {
+    //it('should test invalid initial balance', async function () {
         /**
          * Attempt to set negative initial balance
          * INVALID_INITIAL_BALANCE = 85;
          **/ 
         // test array could potentially be a json file stored with key value pairs, E.g.
-        const testarr1 = {
+        /*const testarr1 = {
             "0": "OK",
             "1": "OK",
             "100": "OK",
@@ -96,7 +111,7 @@ describe('#createAccount()', function () {
                 console.log("ERR " + value);
             }
         }
-    })
+    })*/
 
     it('should test insufficient payer balance', async function () {
         /**

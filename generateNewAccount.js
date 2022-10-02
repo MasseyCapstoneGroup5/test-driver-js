@@ -20,6 +20,14 @@ export async function createTestAccount(publicKey, initialBal) {
     });
 }
 
+export async function createTestAccountNoKey() {
+    // CreateAccount with the JSON-RPC
+    return await JSONRPCRequest("createAccountNoKey", {
+        "publicKey": {},
+        "initialBalance": 1000
+    });
+}
+
 export async function setFundingAccount(accountId, privateKey) {
     // sets funding and fee-paying account for CRUD ops
     await JSONRPCRequest("setup", {
