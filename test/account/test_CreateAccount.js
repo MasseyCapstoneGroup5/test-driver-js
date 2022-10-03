@@ -7,7 +7,6 @@ import {
     generateAccountKeys,
     setFundingAccount
 } from "../../generateNewAccount.js";
-import {PublicKey} from "@hashgraph/sdk";
 import fetch from "node-fetch";
 import {assert, expect} from "chai";
 
@@ -29,24 +28,23 @@ describe('#createAccount()', function () {
             await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);         
             let {publicKey} = await generateAccountKeys();        
             let newAccountId = await createTestAccount(publicKey, 1000);     
-
+    
             const accInf = await getInfoFromTestnet(newAccountId);
-
+    
             let accountID = '0.0.' + accInf.accountId.num.low;     
             let url = `https://testnet.mirrornode.hedera.com/api/v1/accounts?account.id=${accountID}`;     
             await delay(4000);
-
+    
             const response = await fetch(url);
-
+    
             const respJSON = await response.json();   
             const mirrorID = respJSON.accounts[0].account;
-
+    
             //console.log("accountId" + accountID + ' mirrorID ' + mirrorID);
-
+    
             expect(newAccountId).to.equal(accountID);
             expect(newAccountId).to.equal(mirrorID);      
         })
-
         // Create an account with no public key
         it('Creates an account with no public key', async function(){
             /**
@@ -56,145 +54,61 @@ describe('#createAccount()', function () {
             try {
                 await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);      
                 let newAccountId = await createTestAccountNoKey(); 
-
+    
             } catch(err) {
                 assert.equal(err.code, 26, 'error code is KEY_REQUIRED');
             }       
         })
         // Create an account with an invalid public key
         it('Creates an account with an invalid public key', async function(){
-            /**
-             * 
-             * 
-            **/
-            try {
-                let invalidKey = "VO5_3QBSXBpVA1LSPdyjRs1cHr3d70bXi2iVwRjQ7DT7-bHmpr5AqNY9g-0=";
-                let testAcct = await createTestAccount(invalidKey, 1000);
-            } catch(err) {
-                console.log("ERR mssge " + err.message + " err code " + err.code);
-                assert.equal(err.code, 60, 'error code is ???');
-            }    
+            
         })
-        //it('should test invalid initial balance', async function () {
+        
+        // Set initial balance to -100 HBAR
+        it('Sets initial balance to -1000 TinyBAR', async function(){
             /**
              * Attempt to set negative initial balance
              * INVALID_INITIAL_BALANCE = 85;
-             **/ 
-            // test array could potentially be a json file stored with key value pairs, E.g.
-            /*const testarr1 = {
-                "0": "OK",
-                "1": "OK",
-                "100": "OK",
-                "-1": "85",
-                "-0": "OK",
-            };
-            await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
-            // Select key value pairs from test array
-            for (const [key, value] of Object.entries(testarr1)) {
-                // CreateAccount with the JSON-RPC
-                try {
-                    let {publicKey} = await generateAccountKeys();
+             **/  
+            try {
+                await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY); 
+                let {publicKey} = await generateAccountKeys();
+                let initBal = -1000;
 
-                    console.log("\nInitialBalance = " + key);
-                    let testAcctID = await createTestAccount(publicKey, key);
-
-                    // If error is not thrown then check if account has been created
-                    // and has the amount of tinyBar set by the key pair, using the JS SDK Client
-                    let accountBalance = await getBalanceFromTestnet(testAcctID);
-                    let accountBalanceTinybars = convertToTinybar(accountBalance);
-                    expect(accountBalanceTinybars).to.equal(BigInt(Number(parseInt(key))));
-                    expect(value).to.equal("OK");
-                    console.log("OK " + value);
-                } catch (err) {
-                    // If error is thrown then check error message contains the expected value from
-                    // the key value pairs
-                    assert.equal(err.code, value, 'error code equals value from testarr1');
-                    console.log("ERR " + value);
-                }
-            }
-        })*/
-        it('Sets initial balance to -1000 TinyBAR', async function(){
-            /**
-             * 
-             * 
-            **/
-             /* Attempt to set negative initial balance
-             * INVALID_INITIAL_BALANCE = 85;
-             **/
-            try{
-                try {
-                    let invalidKey = "VO5_3QBSXBpVA1LSPdyjRs1cHr3d70bXi2iVwRjQ7DT7-bHmpr5AqNY9g-0=";
-                    let testAcct = await createTestAccount(invalidKey, 1000);
-                } catch(err) {
-                    console.log("ERR mssge " + err.message + " err code " + err.code);
-                    assert.equal(err.code, 60, 'error code is ???');
-                }    
-                    await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY); 
-                    let {publicKey} = await generateAccountKeys();
-                    let initBal = -1000;
-        
-                    console.log("\nInitialBalance = " + initBal);
-                    await createTestAccount(publicKey, initBal);
-                } catch (err) {
-                    // If error is thrown then check error message contains the expected value from
-                    // the key value pairs
-                    assert.equal(err.code, "85", 'error code 85 for INVALID_INITIAL_BALANCE');
+                console.log("\nInitialBalance = " + initBal);
+                await createTestAccount(publicKey, initBal);
+            } catch (err) {
+                // If error is thrown then check error message contains the expected value from
+                // the key value pairs
+                assert.equal(err.code, "85", 'error code 85 for INVALID_INITIAL_BALANCE');
             }
         })
-        it('should test insufficient payer balance', async function () {
+        // Set the initial balance to more than operator balance
+        it('Sets initial balance to more than operator balance', async function(){
             /**
              * The payer account has insufficient cryptocurrency to pay the transaction fee
              * INSUFFICIENT_PAYER_BALANCE = 10;
             **/
-            // boundary testing sufficient payer balance
-            const initialBalance = 500000000;
-            const testarr2 = {
-                "400000000": "OK",
-                "500000001": "10"
-            };
-
-            // Select key value pairs from test array 2
-            for (const [key, value] of Object.entries(testarr2)) {
-                // create a first test account that will be used as the funding account for a second test account
-                await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
-
-                // allocate an initial balance of 5 HBAr to the funding account
-                await createAccountAsFundingAccount(initialBalance);
-
-                // CreateAccount with the JSON-RPC
-                try {
-                    let {publicKey} = await generateAccountKeys();
-
-                    console.log("\nInitialBalance = " + key);
-                    let testAcctID = await createTestAccount(publicKey, key);
-
-
-                    // If error is not thrown then check if account has been created
-                    // and has the amount of tinyBar set by the key pair, using the JS SDK Client
-                    let testAcctBal = await getBalanceFromTestnet(testAcctID);
-                    let accountBalanceTinybars = convertToTinybar(testAcctBal);
-
-                    // console.log("testAcctBal " + accountBalanceTinybars + "\n");
-                    expect(accountBalanceTinybars).to.equal(BigInt(Number(parseInt(key))));
-                    expect(value).to.equal("OK");
-                    console.log("OK " + value);
-                } catch (err) {
-                    // If error is thrown then check error code contains the expected value from
-                    // the key value pairs
-                    assert.equal(err.code, value, 'error code equals value from testarr2');
-                    console.log("ERR " + value);
-                }
+        const initialBalance = 500000000; 
+        const payerBalance = 500000001; 
+            // create a first test account that will be used as the funding account for a second test account
+            await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
+            // allocate an initial balance of 5 HBAr to the funding account
+            await createAccountAsFundingAccount(initialBalance);
+            // CreateAccount with the JSON-RPC
+            console.log("\nInitialBalance = " + initialBalance + "  payerBalance = " + payerBalance);
+            try {
+                let {publicKey} = await generateAccountKeys();
+                await createTestAccount(publicKey, payerBalance);
+    
+            } catch (err) {
+                // If error is thrown then check error code contains the expected value from
+                // the key value pairs
+                assert.equal(err.code, "10", 'error code 10 for INSUFFICIENT_PAYER_BALANCE');
+                //console.log("ERR " + err.code);
             }
         })
-        // Set initial balance to -100 HBAR
-        it('Sets initial balance to -100 HBAR', async function(){
-
-        })
-        // Set the initial balance to more than operator balance
-        it('Sets initial balance to more than operator balance', async function(){
-
-        })
-    });
+    })
     //-----------  Account key signs transactions depositing into account ----------- 
     // Require a receiving signature when creating account transaction
     describe('Account key signatures to desposit into account', function(){
