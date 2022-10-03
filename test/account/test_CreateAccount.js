@@ -113,7 +113,34 @@ describe('#createAccount()', function () {
                 }
             }
         })*/
-
+        it('Sets initial balance to -1000 TinyBAR', async function(){
+            /**
+             * 
+             * 
+            **/
+             /* Attempt to set negative initial balance
+             * INVALID_INITIAL_BALANCE = 85;
+             **/
+            try{
+                try {
+                    let invalidKey = "VO5_3QBSXBpVA1LSPdyjRs1cHr3d70bXi2iVwRjQ7DT7-bHmpr5AqNY9g-0=";
+                    let testAcct = await createTestAccount(invalidKey, 1000);
+                } catch(err) {
+                    console.log("ERR mssge " + err.message + " err code " + err.code);
+                    assert.equal(err.code, 60, 'error code is ???');
+                }    
+                    await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY); 
+                    let {publicKey} = await generateAccountKeys();
+                    let initBal = -1000;
+        
+                    console.log("\nInitialBalance = " + initBal);
+                    await createTestAccount(publicKey, initBal);
+                } catch (err) {
+                    // If error is thrown then check error message contains the expected value from
+                    // the key value pairs
+                    assert.equal(err.code, "85", 'error code 85 for INVALID_INITIAL_BALANCE');
+            }
+        })
         it('should test insufficient payer balance', async function () {
             /**
              * The payer account has insufficient cryptocurrency to pay the transaction fee
