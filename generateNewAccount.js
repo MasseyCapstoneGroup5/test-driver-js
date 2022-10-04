@@ -14,7 +14,7 @@ export async function generateAccountKeys() {
 
 export async function createTestAccount(publicKey, initialBal) {
     // CreateAccount with the JSON-RPC
-    return await JSONRPCRequest("createAccount", {
+    return await JSONRPCRequest("createAccountAllProperties", {
         "publicKey": publicKey,
         "initialBalance": initialBal
     });
@@ -22,9 +22,16 @@ export async function createTestAccount(publicKey, initialBal) {
 
 export async function createTestAccountNoKey() {
     // CreateAccount with the JSON-RPC
-    return await JSONRPCRequest("createAccountNoKey", {
-        "publicKey": {},
-        "initialBalance": 1000
+    return await JSONRPCRequest("createAccountAllProperties", {
+    });
+}
+
+export async function createAccountStakedId(publicKey, initialBalance, stakedAccountId) {
+    // CreateAccount with the JSON-RPC
+    return await JSONRPCRequest("createAccountAllProperties", {
+        "publicKey": publicKey,
+        "initialBalance": initialBalance,
+        "stakedAccountId": stakedAccountId
     });
 }
 

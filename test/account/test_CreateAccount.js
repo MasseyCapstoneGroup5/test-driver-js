@@ -4,6 +4,7 @@ import {
     createAccountAsFundingAccount,
     createTestAccount,
     createTestAccountNoKey,
+    createAccountStakedId,
     generateAccountKeys,
     setFundingAccount
 } from "../../generateNewAccount.js";
@@ -40,8 +41,6 @@ describe('#createAccount()', function () {
             const respJSON = await response.json();   
             const mirrorID = respJSON.accounts[0].account;
     
-            //console.log("accountId" + accountID + ' mirrorID ' + mirrorID);
-    
             expect(newAccountId).to.equal(accountID);
             expect(newAccountId).to.equal(mirrorID);      
         })
@@ -74,8 +73,6 @@ describe('#createAccount()', function () {
                 await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY); 
                 let {publicKey} = await generateAccountKeys();
                 let initBal = -1000;
-
-                console.log("\nInitialBalance = " + initBal);
                 await createTestAccount(publicKey, initBal);
             } catch (err) {
                 // If error is thrown then check error message contains the expected value from
@@ -96,7 +93,6 @@ describe('#createAccount()', function () {
             // allocate an initial balance of 5 HBAr to the funding account
             await createAccountAsFundingAccount(initialBalance);
             // CreateAccount with the JSON-RPC
-            console.log("\nInitialBalance = " + initialBalance + "  payerBalance = " + payerBalance);
             try {
                 let {publicKey} = await generateAccountKeys();
                 await createTestAccount(publicKey, payerBalance);
@@ -105,7 +101,6 @@ describe('#createAccount()', function () {
                 // If error is thrown then check error code contains the expected value from
                 // the key value pairs
                 assert.equal(err.code, "10", 'error code 10 for INSUFFICIENT_PAYER_BALANCE');
-                //console.log("ERR " + err.code);
             }
         })
     })
@@ -125,22 +120,10 @@ describe('#createAccount()', function () {
         // Creates an account with a default max token association
         //The accounts maxAutomaticTokenAssociations can be queried on the consensus node with AccountInfoQuery
         it('Creates an account with a default max token association', async function(){
-            let {publicKey} = await generateAccountKeys();        
-            let newAccountId = await createTestAccount(publicKey);
-            const accInf = await getInfoFromTestnet(newAccountId);
 
-            // Assert balance is default (which is 0)
-            assert.strictEqual(accInf.accountBalanceTinybars, 0);
         })
         // Creates an account with max token set to the maximum 
-        it('Creates an account with a max token set to the maximum', async function(){
-            let {publicKey} = await generateAccountKeys();        
-            let newAccountId = await createTestAccount(publicKey, 1000);
-            const accInf = await getInfoFromTestnet(newAccountId);
-            
-            // Assert balance is in fact the maximum (which is 1000)
-            assert.strictEqual(accInf.accountBalanceTinybars, 1000);
-            
+        it('Creates an account with a max token set to the maximum', async function(){            
             
         })
         // Create an account with token association over the maximum
@@ -156,7 +139,23 @@ describe('#createAccount()', function () {
     describe('Staked ID, ID of account to which is staking', async function() {
         // Create an account and set staked account ID to operator account ID
         it('Creates an account and sets staked account ID to operator account ID', async function(){
+            await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);                
+            let {publicKey} = await generateAccountKeys(); 
+            let newAccountId = await createAccountStakedId(publicKey, 1000, process.env.OPERATOR_ACCOUNT_ID);   
 
+            const accountInfoFromConsensusNode = await getInfoFromTestnet(newAccountId);
+            let accountID = '0.0.' + accountInfoFromConsensusNode.accountId.num.low; 
+            let stakedIDFromConsensusNode = '0.0.' + accountInfoFromConsensusNode.stakingInfo.stakedAccountId.num.low;
+               
+            let url = `https://testnet.mirrornode.hedera.com/api/v1/accounts?account.id=${accountID}`;     
+            await delay(4000);
+    
+            const response = await fetch(url);    
+            const respJSON = await response.json();  
+            const stakedIDFromMirrorNode = respJSON.accounts[0].staked_account_id; 
+    
+            expect(stakedIDFromConsensusNode).to.equal(process.env.OPERATOR_ACCOUNT_ID);
+            expect(stakedIDFromMirrorNode).to.equal(process.env.OPERATOR_ACCOUNT_ID); 
         })
         // Create an acount and set staked node ID and a node ID
         it('Creates an account and sets staked node ID and a node ID', async function(){
