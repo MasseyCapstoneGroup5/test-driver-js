@@ -28,17 +28,16 @@ describe('#createAccount()', function () {
 
             await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);         
             let {publicKey} = await generateAccountKeys();        
-            let newAccountId = await createTestAccount(publicKey, 1000);     
+            let newAccountId = await createTestAccount(publicKey, 1000);
     
             const accInf = await getInfoFromTestnet(newAccountId);
-    
-            let accountID = '0.0.' + accInf.accountId.num.low;     
+            let accountID = accInf.accountId.toString();
             let url = `https://testnet.mirrornode.hedera.com/api/v1/accounts?account.id=${accountID}`;     
             await delay(4000);
-    
+
             const response = await fetch(url);
-    
-            const respJSON = await response.json();   
+
+            const respJSON = await response.json();
             const mirrorID = respJSON.accounts[0].account;
     
             expect(newAccountId).to.equal(accountID);
@@ -106,7 +105,7 @@ describe('#createAccount()', function () {
     })
     //-----------  Account key signs transactions depositing into account ----------- 
     // Require a receiving signature when creating account transaction
-    describe('Account key signatures to desposit into account', function(){
+    describe('Account key signatures to deposit into account', function(){
         it('Creates account transaction and returns Receiver signature required to true', async function(){
 
         })

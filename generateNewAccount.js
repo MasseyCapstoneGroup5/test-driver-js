@@ -1,11 +1,12 @@
 import {JSONRPCRequest} from "./client.js";
+import {AccountId} from "@hashgraph/sdk";
 
 export async function generateAccountKeys() {
     // Generate new private & public key
     let privateKey = await JSONRPCRequest("generatePrivateKey", {})
     let publicKey = await JSONRPCRequest("generatePublicKey", {
         "privateKey": privateKey
-    })    
+    })
     return {
         "publicKey": publicKey,
         "privateKey": privateKey
@@ -14,25 +15,26 @@ export async function generateAccountKeys() {
 
 export async function createTestAccount(publicKey, initialBal) {
     // CreateAccount with the JSON-RPC
-    return await JSONRPCRequest("createAccountAllProperties", {
+    const receipt = await JSONRPCRequest("createAccountAllProperties", {
         "publicKey": publicKey,
         "initialBalance": initialBal
     });
+    return new AccountId(receipt.accountId).toString();
 }
 
 export async function createTestAccountNoKey() {
     // CreateAccount with the JSON-RPC
-    return await JSONRPCRequest("createAccountAllProperties", {
-    });
+    return await JSONRPCRequest("createAccountAllProperties", {});
 }
 
 export async function createAccountStakedId(publicKey, initialBalance, stakedAccountId) {
     // CreateAccount with the JSON-RPC
-    return await JSONRPCRequest("createAccountAllProperties", {
+    const receipt =  await JSONRPCRequest("createAccountAllProperties", {
         "publicKey": publicKey,
         "initialBalance": initialBalance,
         "stakedAccountId": stakedAccountId
     });
+    return new AccountId(receipt.accountId).toString();
 }
 
 export async function setFundingAccount(accountId, privateKey) {
