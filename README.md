@@ -24,7 +24,7 @@ Start the [JSON-RPC Server](https://github.com/MasseyCapstoneGroup5/json-rpc-js-
 
 Run specific test file
 
-    npm run test test/test_Example.js
+    npm run test test/account/test_CreateAccount.js
 
 Run all tests
 

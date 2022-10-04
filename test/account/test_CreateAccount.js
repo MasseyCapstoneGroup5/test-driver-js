@@ -1,5 +1,5 @@
 import {JSONRPCRequest} from "../../client.js";
-import {getInfoFromTestnet, getBalanceFromTestnet} from "../../testnetEnquiry.js";
+import {getInfoFromTestnet} from "../../testnetEnquiry.js";
 import {
     createAccountAsFundingAccount,
     createTestAccount,
@@ -52,7 +52,7 @@ describe('#createAccount()', function () {
             **/
             try {
                 await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);      
-                let newAccountId = await createTestAccountNoKey(); 
+                await createTestAccountNoKey();
     
             } catch(err) {
                 assert.equal(err.code, 26, 'error code is KEY_REQUIRED');
@@ -116,7 +116,7 @@ describe('#createAccount()', function () {
         })
     });
     //----------- Maximum number of tokens that an Account be associated with -----------
-    describe('Maximum number of tokens that an account can be associaated with', function(){
+    describe('Maximum number of tokens that an account can be associated with', function(){
         // Creates an account with a default max token association
         //The accounts maxAutomaticTokenAssociations can be queried on the consensus node with AccountInfoQuery
         it('Creates an account with a default max token association', async function(){
@@ -183,7 +183,7 @@ describe('#createAccount()', function () {
         })
     });
     //----------- If true - account declines receiving a staking reward -----------
-    describe('Account declines recieving a staking reward', async function(){
+    describe('Account declines receiving a staking reward', async function(){
         // Create an account and set the account to decline staking rewards
         it('Creates an account and set the account to decline staking rewards', async function(){
 
@@ -206,7 +206,7 @@ describe('#createAccount()', function () {
 
         })
     });
-return Promise.resolve();
+    return Promise.resolve();
     function delay(time) {
         return new Promise(resolve => setTimeout(resolve, time));
     }
