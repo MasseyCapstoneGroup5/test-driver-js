@@ -1,7 +1,8 @@
 import {JSONRPCRequest} from "../../client.js";
 import {AccountId, Query, AccountInfoQuery} from "@hashgraph/sdk";
-import {getBalanceFromTestnet} from "../../testnetEnquiry.js";
+import {getBalance} from "../../SDKEnquiry.js";
 import {expect} from "chai";
+import {setFundingAccount} from "../../generateNewAccount.js";
 
 let newAccountId;
 let newPrivateKey;
@@ -14,11 +15,7 @@ describe('#getAccountInfoTests', function () { // a suite of tests
 
     // before and after hooks (normally used to set up and reset the client SDK)
     before(async function () {
-        await JSONRPCRequest("setup", {
-                "operatorAccountId": process.env.OPERATOR_ACCOUNT_ID,
-                "operatorPrivateKey": process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
-            }
-        )
+        await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
     });
     after(async function () {
         await JSONRPCRequest("reset")
@@ -43,7 +40,7 @@ describe('#getAccountInfoTests', function () { // a suite of tests
         });
 
         // Check if account has been created and has 1000 tinyBar using the JS SDK Client
-        let accountBalance = await getBalanceFromTestnet(newAccountId);
+        let accountBalance = await getBalance(newAccountId);
         let accountBalanceTinybars = BigInt(Number(accountBalance.hbars._valueInTinybar));
         // TODO: use Longs correctly instead of converting to Int
         expect(accountBalanceTinybars).to.equal(1000n); // TODO add initial amount as parameter in createAccount

@@ -1,8 +1,9 @@
 import {JSONRPCRequest} from "../../client.js";
 import {PublicKey } from "@hashgraph/sdk";
-import {getInfoFromTestnet} from "../../testnetEnquiry.js";
+import {getAccountInfo} from "../../SDKEnquiry.js";
 import {updateAccountKey} from "../../generateUpdates.js";
 import {expect, assert} from "chai";
+import {setFundingAccount} from "../../generateNewAccount.js";
 
 let accountId;
 let firstPvtKey, firstPublicKey;    // generate first pair of keys for new account
@@ -16,11 +17,7 @@ let randomPvtKey, randomPublicKey;  // a random pair to test authorisation failu
     this.timeout(10000); 
 
     before(async function () {
-        await JSONRPCRequest("setup", {
-                "operatorAccountId": process.env.OPERATOR_ACCOUNT_ID,
-                "operatorPrivateKey": process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
-            }
-        )
+        await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
     });
     after(async function () {
         await JSONRPCRequest("reset")
@@ -57,10 +54,10 @@ let randomPvtKey, randomPublicKey;  // a random pair to test authorisation failu
         })
     });    
 
-    it('should retrieve first public key of newly created account via Testnet', async function () {
-        // Use the JS SDK Client to retrive public key of new account
-        let getAccountInfo = await getInfoFromTestnet(accountId);
-        let firstKeySet = getAccountInfo.key;        
+    it('should retrieve first public key of newly created account', async function () {
+        // Use the JS SDK Client to retrieve public key of new account
+        let accountInfo = await getAccountInfo(accountId);
+        let firstKeySet = accountInfo.key;
 
         // Check if public key was successfully set
         expect(
@@ -121,10 +118,10 @@ let randomPvtKey, randomPublicKey;  // a random pair to test authorisation failu
         }        
     });
 
-    it('verify from Testnet that key set updated', async function () {
+    it('verify that key set updated', async function () {
         // Use the JS SDK Client to retrieve updated key field of account
-        let getAccountInfo = await getInfoFromTestnet(accountId);
-        let updatedPublicKey = getAccountInfo.key;
+        let accountInfo = await getAccountInfo(accountId);
+        let updatedPublicKey = accountInfo.key;
 
         // Check that key was successfully updated
         expect(

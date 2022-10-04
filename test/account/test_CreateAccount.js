@@ -1,5 +1,5 @@
 import {JSONRPCRequest} from "../../client.js";
-import {getInfoFromTestnet} from "../../testnetEnquiry.js";
+import {getAccountInfo} from "../../SDKEnquiry.js";
 import {
     createAccountAsFundingAccount,
     createTestAccount,
@@ -26,17 +26,16 @@ describe('#createAccount()', function () {
         // Create an account
         it('Creates an account', async function() {
 
-            await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);         
-            let {publicKey} = await generateAccountKeys();        
+            await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
+            let {publicKey} = await generateAccountKeys();
             let newAccountId = await createTestAccount(publicKey, 1000);
-    
-            const accInf = await getInfoFromTestnet(newAccountId);
+
+            const accInf = await getAccountInfo(newAccountId);
             let accountID = accInf.accountId.toString();
-            let url = `https://testnet.mirrornode.hedera.com/api/v1/accounts?account.id=${accountID}`;     
             await delay(4000);
 
+            let url = `${process.env.MIRROR_NODE_REST_URL}/api/v1/accounts?account.id=${accountID}`;
             const response = await fetch(url);
-
             const respJSON = await response.json();
             const mirrorID = respJSON.accounts[0].account;
     
@@ -138,18 +137,17 @@ describe('#createAccount()', function () {
     describe('Staked ID, ID of account to which is staking', async function() {
         // Create an account and set staked account ID to operator account ID
         it('Creates an account and sets staked account ID to operator account ID', async function(){
-            await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);                
+            await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
             let {publicKey} = await generateAccountKeys(); 
             let newAccountId = await createAccountStakedId(publicKey, 1000, process.env.OPERATOR_ACCOUNT_ID);   
 
-            const accountInfoFromConsensusNode = await getInfoFromTestnet(newAccountId);
-            let accountID = '0.0.' + accountInfoFromConsensusNode.accountId.num.low; 
-            let stakedIDFromConsensusNode = '0.0.' + accountInfoFromConsensusNode.stakingInfo.stakedAccountId.num.low;
-               
-            let url = `https://testnet.mirrornode.hedera.com/api/v1/accounts?account.id=${accountID}`;     
+            const accountInfoFromConsensusNode = await getAccountInfo(newAccountId);
+            let accountID = accountInfoFromConsensusNode.accountId.toString();
+            let stakedIDFromConsensusNode = accountInfoFromConsensusNode.stakingInfo.stakedAccountId.toString();
             await delay(4000);
-    
-            const response = await fetch(url);    
+
+            let url = `${process.env.MIRROR_NODE_REST_URL}/api/v1/accounts?account.id=${accountID}`;
+            const response = await fetch(url);
             const respJSON = await response.json();  
             const stakedIDFromMirrorNode = respJSON.accounts[0].staked_account_id; 
     

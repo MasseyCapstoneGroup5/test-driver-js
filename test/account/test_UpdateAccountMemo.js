@@ -1,7 +1,8 @@
 import {JSONRPCRequest} from "../../client.js";
-import {getInfoFromTestnet} from "../../testnetEnquiry.js";
+import {getAccountInfo} from "../../SDKEnquiry.js";
 import {updateAccountMemo} from "../../generateUpdates.js";
 import {expect, assert} from "chai";
+import {setFundingAccount} from "../../generateNewAccount.js";
 
 let newAccountId;
 let newPrivateKey;
@@ -15,11 +16,7 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
 
     // before and after hooks (normally used to set up and reset the client SDK)
     before(async function () {
-        await JSONRPCRequest("setup", {
-                "operatorAccountId": process.env.OPERATOR_ACCOUNT_ID,
-                "operatorPrivateKey": process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
-            }
-        )
+        await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
     });
     after(async function () {
         await JSONRPCRequest("reset")
@@ -39,11 +36,11 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
         });
     });
 
-    // Retrieve initial (default) memo value of newly created account from Testnet
-    it('should get initial memo value using Testnet', async function () {
+    // Retrieve initial (default) memo value of newly created account
+    it('should get initial memo value', async function () {
         // Use the JS SDK Client to retrieve default memo from new account
-        let getAccountInfo = await getInfoFromTestnet(newAccountId);
-        initialMemo = getAccountInfo.accountMemo;
+        let accountInfo = await getAccountInfo(newAccountId);
+        initialMemo = accountInfo.accountMemo;
     });   
 
     // change value in memo field to a random five-character string via JSON-RPC
@@ -74,14 +71,14 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
         }        
     });
 
-    it('should verify memo was updated on Testnet', async function () {
+    it('should verify memo was updated', async function () {
         // update memo on account
         memostring = await generateLongString(99);
         await updateAccountMemo(newAccountId, newPrivateKey, memostring);
 
         // Use the JS SDK Client to retrieve memo field of new account
-        let getAccountInfo = await getInfoFromTestnet(newAccountId);
-        updatedMemo = getAccountInfo.accountMemo;
+        let accountInfo = await getAccountInfo(newAccountId);
+        updatedMemo = accountInfo.accountMemo;
 
         // Check if memo was successfully updated
         expect(updatedMemo).to.equal(memostring);
