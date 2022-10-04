@@ -1,6 +1,7 @@
 import {JSONRPCRequest} from "../../client.js";
-import {getInfoFromTestnet, getBalanceFromTestnet} from "../../testnetEnquiry.js";
+import {getAccountInfo, getBalance} from "../../SDKEnquiry.js";
 import {assert, expect} from "chai";
+import {setFundingAccount} from "../../generateNewAccount.js";
 
 let newAccountId;
 let newAccountPrivateKey;
@@ -20,11 +21,7 @@ let recipientFinalBal;
     this.timeout(10000);
 
     before(async function generateAccountId() {
-        await JSONRPCRequest("setup", {
-                "operatorAccountId": process.env.OPERATOR_ACCOUNT_ID,
-                "operatorPrivateKey": process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
-            }
-        )
+        await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
     });
     after(async function () {
         await JSONRPCRequest("reset")
@@ -54,13 +51,13 @@ let recipientFinalBal;
         });
     });
     
-    it('should get initial balance of newAccount from Testnet', async function () {
-        let accountBalance = await getBalanceFromTestnet(newAccountId); 
+    it('should get initial balance of newAccount', async function () {
+        let accountBalance = await getBalance(newAccountId);
         newAccountBal  = BigInt(Number(accountBalance.hbars._valueInTinybar));
     });
 
-    it('should get initial balance of recipientAccount from Testnet', async function () {
-        let accountBalance = await getBalanceFromTestnet(recipientAccountId); 
+    it('should get initial balance of recipientAccount', async function () {
+        let accountBalance = await getBalance(recipientAccountId);
         recipientInitialBal  = BigInt(Number(accountBalance.hbars._valueInTinybar));  
     }); 
 
@@ -76,11 +73,11 @@ let recipientFinalBal;
         expect(deletedAccountId.accountId).to.equal(null);
     });
     /**
-    * Further tests for newAccountId on Testnet will throw failed precheck error: ACCOUNT_DELETED
+    * Further tests for newAccountId will throw failed precheck error: ACCOUNT_DELETED
     * Instead -> test for transfer of newAccount's closing balance to recipientAccount
     */
-    it('check via Testnet that recipientAccount received closing balance', async function () {
-        let accountBalance = await getBalanceFromTestnet(recipientAccountId); 
+    it('check that recipientAccount received closing balance', async function () {
+        let accountBalance = await getBalance(recipientAccountId);
         recipientFinalBal  = BigInt(Number(accountBalance.hbars._valueInTinybar)); 
       
         // Check if recipient's balance was successfully increased by amount of deleted account's balance
@@ -89,19 +86,19 @@ let recipientFinalBal;
            );
     })  
     
-    it('test via Testnet that newAccount is deleted', async function () {
+    it('test that newAccount is deleted', async function () {
         /**
          * the account has been marked as deleted
          * ACCOUNT_DELETED = 72;
          **/ 
         try {
             console.log("\nTry to enquire on account " + newAccountId);
-            await getInfoFromTestnet(newAccountId);
+            await getAccountInfo(newAccountId);
         } catch (err) {
             assert.equal(err.status._code, 72, 'error code equals 72 (ACCOUNT_DELETED)');
             console.log("ERR " + err.status._code);
             return
         }
-        assert.isOk(false, 'getInfoFromTestnet must throw error')
+        assert.isOk(false, 'getAccountInfo must throw error')
     })
 });
