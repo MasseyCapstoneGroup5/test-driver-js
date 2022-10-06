@@ -1,14 +1,12 @@
-import {AccountCreateTransaction, TransactionId, Timestamp} from "@hashgraph/sdk";
+import {AccountCreateTransaction, TransactionId, Timestamp, Client} from "@hashgraph/sdk";
 // Token Related
 // creates AccountCreateTransaction query and sets the max automatic token association
-export async function createMaxTokenAssociation(max, publicKey, accoundId){
-    const accountId = accoundId;
-    const validStart = new Timestamp(5, 4);
-    let transactionId = new TransactionId(accountId, validStart);
-
-    let transaction = new AccountCreateTransaction()
-            .setKey(publicKey)
-            .setMaxAutomaticTokenAssociations(max)
-            .setTransactionId(transactionId);
-    return transaction.maxAutomaticTokenAssociations.toString();
+export async function createMaxTokenAssociation(max, accountId){
+    //let transactionId = new TransactionId(accoundId, validStart, false, null);
+    const client = Client.forTestnet();
+    const transactionId = TransactionId(accountId, 0, false, null);
+    return new AccountCreateTransaction()
+        .setMaxAutomaticTokenAssociations(max)
+        .setTransactionId(transactionId)
+        .freezeWith(client);
 }
