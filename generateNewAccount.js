@@ -13,7 +13,7 @@ export async function generateAccountKeys() {
     };
 }
 
-export async function createTestAccount(publicKey, initialBal) {
+export async function createTestAccount(publicKey, initialBal=1000) {
     // CreateAccount with the JSON-RPC
     const receipt = await JSONRPCRequest("createAccountAllProperties", {
         "publicKey": publicKey,
@@ -27,12 +27,37 @@ export async function createTestAccountNoKey() {
     return await JSONRPCRequest("createAccountAllProperties", {});
 }
 
-export async function createAccountStakedId(publicKey, initialBalance, stakedAccountId) {
+export async function createTestAccountInvalidKey(publicKey) {
+    // CreateAccount with the JSON-RPC
+    return await JSONRPCRequest("createAccountAllProperties", {
+        "publicKey": publicKey
+    });
+}
+
+export async function createAccountStakedId(publicKey, stakedAccountId) {
     // CreateAccount with the JSON-RPC
     const receipt =  await JSONRPCRequest("createAccountAllProperties", {
         "publicKey": publicKey,
-        "initialBalance": initialBalance,
         "stakedAccountId": stakedAccountId
+    });
+    return new AccountId(receipt.accountId).toString();
+}
+
+export async function createAccountStakedNodeId(publicKey, stakedNodeId) {
+    // CreateAccount with the JSON-RPC
+    const receipt =  await JSONRPCRequest("createAccountAllProperties", {
+        "publicKey": publicKey,
+        "stakedNodeId": stakedNodeId
+    });
+    return new AccountId(receipt.accountId).toString();
+}
+
+export async function createAccountWithStakedAccountAndNodeIds(publicKey, stakedAccountId, stakedNodeId) {
+    // CreateAccount with the JSON-RPC
+    const receipt =  await JSONRPCRequest("createAccountAllProperties", {
+        "publicKey": publicKey,
+        "stakedAccountId": stakedAccountId,
+        "stakedNodeId": stakedNodeId
     });
     return new AccountId(receipt.accountId).toString();
 }
