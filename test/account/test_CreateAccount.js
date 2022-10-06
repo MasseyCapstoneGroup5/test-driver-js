@@ -6,8 +6,11 @@ import {
     createTestAccountNoKey,
     createAccountStakedId,
     generateAccountKeys,
-    setFundingAccount
+    setFundingAccount,
 } from "../../generateNewAccount.js";
+import {
+    createMaxTokenAssociation
+} from "../../generateTransactions.js";
 import fetch from "node-fetch";
 import {assert, expect} from "chai";
 
@@ -84,8 +87,8 @@ describe('#createAccount()', function () {
              * The payer account has insufficient cryptocurrency to pay the transaction fee
              * INSUFFICIENT_PAYER_BALANCE = 10;
             **/
-        const initialBalance = 500000000; 
-        const payerBalance = 500000001; 
+            const initialBalance = 500000000; 
+            const payerBalance = 500000001; 
             // create a first test account that will be used as the funding account for a second test account
             await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY);
             // allocate an initial balance of 5 HBAr to the funding account
@@ -114,17 +117,28 @@ describe('#createAccount()', function () {
         })
     });
     //----------- Maximum number of tokens that an Account be associated with -----------
-    describe('Maximum number of tokens that an account can be associated with', function(){
-        // Creates an account with a default max token association
+    describe('Max Token Association', function(){
+        // Creates an account with a default max token association (0)
         //The accounts maxAutomaticTokenAssociations can be queried on the consensus node with AccountInfoQuery
         it('Creates an account with a default max token association', async function(){
+            try {
+                let {publicKey} = await generateAccountKeys();
+                let newAccountId = await createTestAccount(publicKey, 0);
 
+                const accInf = await getAccountInfo(newAccountId);
+                const maxAssoc = await createMaxTokenAssociation(0, publicKey, accInf.accountId);
+                
+                assert.equal(accInf.maxAutomaticTokenAssociations.toString(), maxAssoc);
+                
+            } catch (err) {
+               console.log(err);
+            }
         })
-        // Creates an account with max token set to the maximum 
+        // Creates an account with max token set to the maximum (1000)
         it('Creates an account with a max token set to the maximum', async function(){            
             
         })
-        // Create an account with token association over the maximum
+        // Create an account with token association over the  (2000)
         it('Creates an account with a token association over the maximum', async function(){
             
         })
