@@ -121,30 +121,71 @@ describe('#createAccount()', function () {
         // Creates an account with a default max token association (0)
         //The accounts maxAutomaticTokenAssociations can be queried on the consensus node with AccountInfoQuery
         it('Creates an account with a default max token association', async function(){
-            try {
-                let {publicKey} = await generateAccountKeys();
+            try{
+                let {publicKey, privateKey} = await generateAccountKeys();
                 let newAccountId = await createTestAccount(publicKey, 0);
 
-                const accInf = await getAccountInfo(newAccountId);
-                const maxAssoc = await createMaxTokenAssociation(0, publicKey, accInf.accountId);
-                
-                assert.equal(accInf.maxAutomaticTokenAssociations.toString(), maxAssoc);
-                
-            } catch (err) {
-               console.log(err);
+                let accInf = await getAccountInfo(newAccountId);
+                let maxAssoc = await createMaxTokenAssociation(
+                    0,
+                    privateKey.toString(), 
+                    accInf.accountId.toString());
+                assert.equal(maxAssoc.maxAutomaticTokenAssociations, 0);
+            }
+            catch (err) {
+                console.error(err);
             }
         })
         // Creates an account with max token set to the maximum (1000)
-        it('Creates an account with a max token set to the maximum', async function(){            
-            
+        it('Max token set to the maximum', async function(){            
+            try{
+                let {publicKey, privateKey} = await generateAccountKeys();
+                let newAccountId = await createTestAccount(publicKey, 0);
+
+                let accInf = await getAccountInfo(newAccountId);
+                let maxAssoc = await createMaxTokenAssociation(
+                    1000,
+                    privateKey.toString(), 
+                    accInf.accountId.toString());
+                assert.equal(maxAssoc.maxAutomaticTokenAssociations, 1000);
+            }
+            catch (err) {
+                console.error(err);
+            }
         })
-        // Create an account with token association over the  (2000)
-        it('Creates an account with a token association over the maximum', async function(){
-            
+        // Create an account with token association over the max (2000)
+        it('Max token association over the maximum', async function(){
+            try{
+                let {publicKey, privateKey} = await generateAccountKeys();
+                let newAccountId = await createTestAccount(publicKey, 0);
+
+                let accInf = await getAccountInfo(newAccountId);
+                let maxAssoc = await createMaxTokenAssociation(
+                    2000,
+                    privateKey.toString(), 
+                    accInf.accountId.toString());
+                assert.equal(maxAssoc.maxAutomaticTokenAssociations, 3);
+            }
+            catch (err) {
+                console.error(err);
+            }
         })
         // Create an account with a max token association of -1
-        it('Creates an account with a max token association of -1', async function(){
-            
+        it('Max token association of -1', async function(){
+            try{
+                let {publicKey, privateKey} = await generateAccountKeys();
+                let newAccountId = await createTestAccount(publicKey, 0);
+
+                let accInf = await getAccountInfo(newAccountId);
+                let maxAssoc = await createMaxTokenAssociation(
+                    -1,
+                    privateKey.toString(), 
+                    accInf.accountId.toString());
+                assert.equal(maxAssoc.maxAutomaticTokenAssociations, 3);
+            }
+            catch (err) {
+                console.error(err);
+            }
         })
     });
     //----------- Staked ID - ID of the account to which is staking --------------------
