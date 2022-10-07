@@ -12,11 +12,10 @@ import {
     generateAccountKeys,
     setFundingAccount
 } from "../../generateNewAccount.js";
-import {
-    createMaxTokenAssociation
-} from "../../generateTransactions.js";
 import crypto from "crypto";
 import {assert, expect} from "chai";
+import {AccountId} from "@hashgraph/sdk";
+
 
 let publicKey;
 /**
@@ -143,70 +142,71 @@ describe('#createAccount()', function () {
     });
     //----------- Maximum number of tokens that an Account be associated with -----------
     describe('Max Token Association', function(){
-        // Creates an account with a default max token association (0)
+        // Creates an account with a default max token association
         //The accounts maxAutomaticTokenAssociations can be queried on the consensus node with AccountInfoQuery
         it('Creates an account with a default max token association', async function(){
             try{
-                let {publicKey, privateKey} = await generateAccountKeys();
-                let newAccountId = await createTestAccount(publicKey, 0);
-
+                await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY); 
+                let {publicKey} = await generateAccountKeys();
+                const receipt =  await JSONRPCRequest("createAccountAllProperties", {
+                    "publicKey": publicKey,
+                    "initialBalance": 0,
+                    "maxAutomaticTokenAssociations": 0
+                });
+                let newAccountId = new AccountId(receipt.accountId).toString();
                 let accInf = await getAccountInfo(newAccountId);
-                let maxAssoc = await createMaxTokenAssociation(
-                    0,
-                    privateKey.toString(), 
-                    accInf.accountId.toString());
-                assert.equal(maxAssoc.maxAutomaticTokenAssociations, 0);
+                assert.equal(accInf.maxAutomaticTokenAssociations, 0);
             }
             catch (err) {
                 console.error(err);
             }
         })
-        // Creates an account with max token set to the maximum (1000)
+        // Creates an account with max token set to the maximum
         it('Max token set to the maximum', async function(){            
             try{
-                let {publicKey, privateKey} = await generateAccountKeys();
-                let newAccountId = await createTestAccount(publicKey, 0);
-
+                await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY); 
+                let {publicKey} = await generateAccountKeys();
+                const receipt =  await JSONRPCRequest("createAccountAllProperties", {
+                    "publicKey": publicKey,
+                    "initialBalance": 0,
+                    "maxAutomaticTokenAssociations": 10
+                });
+                let newAccountId = new AccountId(receipt.accountId).toString();
                 let accInf = await getAccountInfo(newAccountId);
-                let maxAssoc = await createMaxTokenAssociation(
-                    1000,
-                    privateKey.toString(), 
-                    accInf.accountId.toString());
-                assert.equal(maxAssoc.maxAutomaticTokenAssociations, 1000);
+                assert.equal(accInf.maxAutomaticTokenAssociations, 100);
             }
             catch (err) {
                 console.error(err);
             }
         })
-        // Create an account with token association over the max (2000)
+        // Create an account with token association over the max
         it('Max token association over the maximum', async function(){
             try{
-                let {publicKey, privateKey} = await generateAccountKeys();
-                let newAccountId = await createTestAccount(publicKey, 0);
-
-                let accInf = await getAccountInfo(newAccountId);
-                let maxAssoc = await createMaxTokenAssociation(
-                    2000,
-                    privateKey.toString(), 
-                    accInf.accountId.toString());
-                assert.equal(maxAssoc.maxAutomaticTokenAssociations, 2000);
+                await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY); 
+                let {publicKey} = await generateAccountKeys();
+                const receipt =  await JSONRPCRequest("createAccountAllProperties", {
+                    "publicKey": publicKey,
+                    "initialBalance": 0,
+                    "maxAutomaticTokenAssociations": 2000
+                });
             }
             catch (err) {
-                console.error(err);
+                assert.equal(err.code, "9", 'INSUFFICIENT_TX_FEE');
             }
         })
         // Create an account with a max token association of -1
         it('Max token association of -1', async function(){
             try{
-                let {publicKey, privateKey} = await generateAccountKeys();
-                let newAccountId = await createTestAccount(publicKey, 0);
-
+                await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY); 
+                let {publicKey} = await generateAccountKeys();
+                const receipt =  await JSONRPCRequest("createAccountAllProperties", {
+                    "publicKey": publicKey,
+                    "initialBalance": 0,
+                    "maxAutomaticTokenAssociations": -1
+                });
+                let newAccountId = new AccountId(receipt.accountId).toString();
                 let accInf = await getAccountInfo(newAccountId);
-                let maxAssoc = await createMaxTokenAssociation(
-                    -1,
-                    privateKey.toString(), 
-                    accInf.accountId.toString());
-                assert.equal(maxAssoc.maxAutomaticTokenAssociations, -1);
+                assert.equal(accInf.maxAutomaticTokenAssociations, -1);
             }
             catch (err) {
                 console.error(err);
