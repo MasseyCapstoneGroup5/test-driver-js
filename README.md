@@ -1,4 +1,4 @@
-# test-driver-js
+``# test-driver-js
 
 ## Setup
 
@@ -38,3 +38,7 @@ Run specific test file
 Run all tests
 
     npm run test
+
+
+### Reports
+After running `npm run test` the generated HTML and JSON reports can be found in the mochawesome-report folder

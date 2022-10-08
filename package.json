@@ -9,6 +9,9 @@
     "node-fetch": "^3.2.10"
   },
   "scripts": {
-    "test": "mocha --recursive --exit"
+    "test": "mocha --recursive  --reporter mochawesome --exit"
+  },
+  "devDependencies": {
+    "mochawesome": "^7.1.3"
   }
 }

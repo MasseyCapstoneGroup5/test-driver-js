@@ -106,3 +106,5 @@ dist
 # IDE specific files
 .idea
 .vscode
+
+mochawesome-report/
