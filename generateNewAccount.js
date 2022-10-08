@@ -97,3 +97,12 @@ export async function createAccountDeclineRewards(publicKey, condition) {
   })
   return new AccountId(receipt.accountId).toString()
 }
+
+export async function createAccountMemo(publicKey, memo) {
+  // CreateAccount with the JSON-RPC
+  const receipt = await JSONRPCRequest('createAccountAllProperties', {
+    publicKey: publicKey,
+    accountMemo: memo,
+  })
+  return new AccountId(receipt.accountId).toString()
+}

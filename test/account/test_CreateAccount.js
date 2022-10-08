@@ -12,10 +12,11 @@ import {
   createAccountDeclineRewards,
   generateAccountKeys,
   setFundingAccount,
+  createAccountMemo,
 } from '../../generateNewAccount.js'
 import crypto from 'crypto'
 import { assert, expect } from 'chai'
-import { AccountId } from '@hashgraph/sdk'
+import { AccountId, ContractFunctionSelector } from '@hashgraph/sdk'
 
 let publicKey
 /**
@@ -435,9 +436,34 @@ describe('#createAccount()', function () {
 
   describe('Create accounts with a memo', async function () {
     // Create an account with a memo
-    it('Creates an account with a memo', async function () {})
+    it('Creates an account with a memo', async function () {
+      let testMemo = 'testMemo'
+      const newAccountID = await createAccountMemo(publicKey, testMemo)
+
+      // First query consensus node
+      const cNodeQuery = await getAccountInfo(newAccountID)
+      const cNodeRes = cNodeQuery.accountMemo
+
+      // Query the mirror node
+      const mNodeQuery = await getJsonData(newAccountID)
+      const mNodeRes = mNodeQuery.accounts[0].memo
+
+      expect(cNodeRes).to.equal(testMemo)
+      expect(mNodeRes).to.equal(testMemo)
+    })
     // Create an account with a memo that exceeds 100 characters
-    it('Creates an account with a memo exceeding 100 characters', async function () {})
+    it('Creates an account with a memo exceeding 100 characters', async function () {
+      const testMemo =
+        'testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo123' // 101 characters
+      let err = false
+      try {
+        const newAccountID = await createAccountMemo(publicKey, testMemo)
+      } catch (error) {
+        err = true
+      }
+
+      expect(err, 'The test should throw an error').to.be.true
+    })
   })
 
   return Promise.resolve()
