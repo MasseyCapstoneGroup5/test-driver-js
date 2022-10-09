@@ -130,16 +130,23 @@ describe('#createAccount()', function () {
   // Require a receiving signature when creating account transaction
   describe('Account key signatures to deposit into account', function () {
     it('Creates account transaction and returns Receiver signature required to true', async function () {
-      // Creates new account transaction that doesn't require a signature 
       try {
-        const receiverSignatureRequired = false
-        await createAccountReceiverSignature(publicKey, receiverSignatureRequired)
-      } catch (err) {
-        console.log(err.message);
-       // assert.equal(err.code, '322', 'error code 322 for INVALID_STAKING_ID ')
-      }
-    })
+        const receiverSignatureRequired = true
+        const newAccount = await createAccountReceiverSignature(publicKey, 1, receiverSignatureRequired)
+        const newAccountId = "0.0." + newAccount.accountId.num.low
 
+        // query account via consensus node to verify creation
+        const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
+        console.log( accountInfoFromConsensusNode);
+
+
+      } catch(err) {
+        console.log("err" + err)
+      }
+      // Creates new account that always requires transactions to have receiving signature 
+
+    })
+    // Creates new account that doesn't require all transactions to have receiving signature 
     it('Creates new account transaction without Receiver signature required', async function () {})
   })
   //----------- Maximum number of tokens that an Account be associated with -----------
@@ -147,11 +154,6 @@ describe('#createAccount()', function () {
     // Creates an account with a default max token association
     //The accounts maxAutomaticTokenAssociations can be queried on the consensus node with AccountInfoQuery
     it('Creates an account with a default max token association', async function () {
-      await setFundingAccount(
-        process.env.OPERATOR_ACCOUNT_ID,
-        process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
-      )
-      let { publicKey } = await generateAccountKeys()
       const receipt = await JSONRPCRequest('createAccountAllProperties', {
         publicKey: publicKey,
         initialBalance: 0,
@@ -163,11 +165,6 @@ describe('#createAccount()', function () {
     })
     // Creates an account with max token set to the maximum
     it('Max token set to the maximum', async function () {
-      await setFundingAccount(
-        process.env.OPERATOR_ACCOUNT_ID,
-        process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
-      )
-      let { publicKey } = await generateAccountKeys()
       const receipt = await JSONRPCRequest('createAccountAllProperties', {
         publicKey: publicKey,
         initialBalance: 0,
@@ -179,12 +176,7 @@ describe('#createAccount()', function () {
     })
     // Create an account with token association over the max
     it('Max token association over the maximum', async function () {
-      try {
-        await setFundingAccount(
-          process.env.OPERATOR_ACCOUNT_ID,
-          process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
-        )
-        let { publicKey } = await generateAccountKeys()
+      try {  
         const receipt = await JSONRPCRequest('createAccountAllProperties', {
           publicKey: publicKey,
           initialBalance: 0,
@@ -196,11 +188,6 @@ describe('#createAccount()', function () {
     })
     // Create an account with a max token association of -1
     it('Max token association of -1', async function () {
-      await setFundingAccount(
-        process.env.OPERATOR_ACCOUNT_ID,
-        process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
-      )
-      let { publicKey } = await generateAccountKeys()
       const receipt = await JSONRPCRequest('createAccountAllProperties', {
         publicKey: publicKey,
         initialBalance: 0,
@@ -420,4 +407,8 @@ describe('#createAccount()', function () {
   })
 
   return Promise.resolve()
+  function convertToTinybar(hbarVal) {
+    // transforms Hbar to Tinybar at ratio 1: 100,000,000
+    return BigInt(Number(hbarVal.hbars._valueInTinybar))
+  }
 })
