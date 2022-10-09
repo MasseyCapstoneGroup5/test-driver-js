@@ -39,7 +39,7 @@ export async function JSONRPCRequest(method, params) {
 
     let jsonRPCResponse = await JSONRPClient.requestAdvanced(jsonRPCRequest);
     if (jsonRPCResponse.error) {
-        throw {name: "Error", message: jsonRPCResponse.error.message, code: jsonRPCResponse.error.code}
+        throw {name: "Error", ...jsonRPCResponse.error}
     } else {
         return jsonRPCResponse.result
     }

@@ -22,7 +22,7 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
         await JSONRPCRequest("reset")
     });
     
-    // create a new account via JSON-RPC server for update of memo field testing
+    // create a new account via JSON-RPC server for update of memo field-testing
     it('should create a new account via JSON-RPC server', async function () {
         // Generate new private & public key
         newPrivateKey = await JSONRPCRequest("generatePrivateKey", {})
@@ -31,9 +31,10 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
         });
 
         // CreateAccount with the JSON-RPC
-        newAccountId = await JSONRPCRequest("createAccount", {
+        let response = await JSONRPCRequest("createAccount", {
             "publicKey": newPublicKey
         });
+        newAccountId = response.accountId
     });
 
     // Retrieve initial (default) memo value of newly created account
@@ -52,7 +53,7 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
          */
          const testarr = {
             "100": "OK",
-            "101": "8",
+            "101": "MEMO_TOO_LONG",
         };
         for (const [key, value] of Object.entries(testarr)) {  
             try {
@@ -65,7 +66,7 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
             } catch(err) {
                 // If error is thrown then check error message contains the expected status code
                 //console.log("ERR " + value);
-                assert.equal(err.code, value, 'error code is for MEMO_TOO_LONG');
+                assert.equal(err.data.status, value, 'error code is for MEMO_TOO_LONG');
                 console.log("ERR " + value);
             }           
         }        

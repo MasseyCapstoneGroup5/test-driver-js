@@ -6,7 +6,6 @@ import {
   createTestAccount,
   createAccountReceiverSignature,
   createTestAccountNoKey,
-  createTestAccountInvalidKey,
   createAccountStakedId,
   createAccountStakedNodeId,
   createAccountWithStakedAccountAndNodeIds,
@@ -17,24 +16,25 @@ import {
 } from '../../generateNewAccount.js'
 import crypto from 'crypto'
 import { assert, expect } from 'chai'
-import { AccountId, ContractFunctionSelector } from '@hashgraph/sdk'
 
-let publicKey, privateKey
 /**
  * Test Create account and compare results with js SDK
  */
 describe('#createAccount()', function () {
   this.timeout(15000)
+  let publicKey, privateKey
 
   before(async function () {
     await setFundingAccount(
       process.env.OPERATOR_ACCOUNT_ID,
       process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
-    )
-    ;({ publicKey, privateKey } = await generateAccountKeys())
+    );
   })
   after(async function () {
     await JSONRPCRequest('reset')
+  })
+  beforeEach(async function () {
+    ({ publicKey, privateKey } = await generateAccountKeys())
   })
 
   //----------- Key is needed to sign each transfer -----------
@@ -44,7 +44,7 @@ describe('#createAccount()', function () {
       // initiate request for JSON-RPC server to create a new account
       const newAccountId = await createTestAccount(publicKey)
       // query account via consensus node to verify creation
-      const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)        
+      const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
       const accountIDFromConsensusNode = accountInfoFromConsensusNode.accountId.toString()
 
       // query account via mirror node to confirm availability after creation
@@ -64,9 +64,10 @@ describe('#createAccount()', function () {
       try {
         // request JSON-RPC server to try to create a new account without a public key
         await createTestAccountNoKey()
+        assert.isTrue(false, "Should throw an error");
       } catch (err) {
         // confirm error thrown for creation attempt without provision of public key
-        assert.equal(err.code, 26, 'error code is KEY_REQUIRED')
+        assert.equal(err.data.status, "KEY_REQUIRED")
       }
     })
     // Create an account with an invalid public key
@@ -75,10 +76,11 @@ describe('#createAccount()', function () {
         // generate a random key value of 88 bytes (where 88b is equal to byte length of valid public key)
         const invalidPublicKey = crypto.randomBytes(88).toString()
         // request JSON-RPC server to try to create a new account with invalid public key
-        await createTestAccountInvalidKey(invalidPublicKey)
+        await createTestAccount(invalidPublicKey)
+        assert.isTrue(false, "Should throw an error");
       } catch (err) {
         // confirm error thrown for creation attempt with an invalid public key
-        assert.equal(err.code, 0, 'error code 0 thrown')
+        assert.equal(err.code, -32603, 'Internal error')
       }
     })
     // Set initial balance to -100 HBAR
@@ -93,12 +95,12 @@ describe('#createAccount()', function () {
         // convert Hbar to Tinybar at ratio 1: 100,000,000
         let negativeInitialBalance = initialBalance *= -100000000
         await createTestAccount(publicKey, negativeInitialBalance)
+        assert.isTrue(false, "Should throw an error");
       } catch (err) {
         // confirm error thrown for creation attempt using a negative initial balance amount
         assert.equal(
-          err.code,
-          '85',
-          'error code 85 for INVALID_INITIAL_BALANCE'
+          err.data.status,
+          'INVALID_INITIAL_BALANCE',
         )
       }
     })
@@ -115,13 +117,13 @@ describe('#createAccount()', function () {
       await createAccountAsFundingAccount(initialBalance)
       try {
         await createTestAccount(publicKey, payerBalance)
+        assert.isTrue(false, "Should throw an error");
       } catch (err) {
         // confirm error thrown for creation attempt where initial balance is more than the
         // balance held in the funding account balance
         assert.equal(
-          err.code,
-          '10',
-          'error code 10 for INSUFFICIENT_PAYER_BALANCE'
+          err.data.status,
+          'INSUFFICIENT_PAYER_BALANCE',
         )
       }
     })
@@ -130,17 +132,16 @@ describe('#createAccount()', function () {
   // Require a receiving signature when creating account transaction
   describe('Account key signatures to deposit into account', function () {
     it('Creates account transaction and returns Receiver signature required to true', async function () {
-        // Creates new account that always requires transactions to have receiving signature 
+        // Creates new account that always requires transactions to have receiving signature
         const receiverSignatureRequired = true
-        const newAccount = await createAccountReceiverSignature(publicKey, privateKey, 1, receiverSignatureRequired)
-        const newAccountId = "0.0." + newAccount.accountId.num.low
+        const newAccountId = await createAccountReceiverSignature(publicKey, privateKey, 1, receiverSignatureRequired)
 
         // query account via consensus node to verify creation
         const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
         const recvdSignatureStatusFromConsensusNode = accountInfoFromConsensusNode.isReceiverSignatureRequired
   
         // query account via mirror node to confirm availability after creation
-        const respJSON = await getJsonData(newAccountId) 
+        const respJSON = await getJsonData(newAccountId)
         const recvdSignatureStatusFromMirrorNode = respJSON.accounts[0].receiver_sig_required
   
         // confirm pass status with testing for account creation with requirement for signature set to true
@@ -155,46 +156,47 @@ describe('#createAccount()', function () {
     // Creates an account with a default max token association
     //The accounts maxAutomaticTokenAssociations can be queried on the consensus node with AccountInfoQuery
     it('Creates an account with a default max token association', async function () {
-      const receipt = await JSONRPCRequest('createAccountAllProperties', {
+      const response = await JSONRPCRequest('createAccount', {
         publicKey: publicKey,
         initialBalance: 0,
         maxAutomaticTokenAssociations: 0,
       })
-      let newAccountId = new AccountId(receipt.accountId).toString()
+      let newAccountId = response.accountId
       let accInf = await getAccountInfo(newAccountId)
       assert.equal(accInf.maxAutomaticTokenAssociations, 0)
     })
     // Creates an account with max token set to the maximum
     it('Max token set to the maximum', async function () {
-      const receipt = await JSONRPCRequest('createAccountAllProperties', {
+      const response = await JSONRPCRequest('createAccount', {
         publicKey: publicKey,
         initialBalance: 0,
         maxAutomaticTokenAssociations: 10,
       })
-      let newAccountId = new AccountId(receipt.accountId).toString()
+      let newAccountId = response.accountId
       let accInf = await getAccountInfo(newAccountId)
-      assert.equal(accInf.maxAutomaticTokenAssociations, 100)
+      assert.equal(accInf.maxAutomaticTokenAssociations, 10)
     })
     // Create an account with token association over the max
     it('Max token association over the maximum', async function () {
-      try {  
-        const receipt = await JSONRPCRequest('createAccountAllProperties', {
+      try {
+        await JSONRPCRequest('createAccount', {
           publicKey: publicKey,
           initialBalance: 0,
           maxAutomaticTokenAssociations: 2000,
         })
+        assert.isTrue(false, "Should throw an error");
       } catch (err) {
-        assert.equal(err.code, '9', 'INSUFFICIENT_TX_FEE')
+        assert.equal(err.data.status, 'INSUFFICIENT_TX_FEE')
       }
     })
     // Create an account with a max token association of -1
     it('Max token association of -1', async function () {
-      const receipt = await JSONRPCRequest('createAccountAllProperties', {
+      const response = await JSONRPCRequest('createAccount', {
         publicKey: publicKey,
         initialBalance: 0,
         maxAutomaticTokenAssociations: -1,
       })
-      let newAccountId = new AccountId(receipt.accountId).toString()
+      let newAccountId = response.accountId
       let accInf = await getAccountInfo(newAccountId)
       assert.equal(accInf.maxAutomaticTokenAssociations, -1)
     })
@@ -224,9 +226,9 @@ describe('#createAccount()', function () {
       )
       expect(stakedIDFromMirrorNode).to.equal(process.env.OPERATOR_ACCOUNT_ID)
     })
-    // Create an acount and set staked node ID and a node ID
+    // Create an account and set staked node ID and a node ID
     it('Creates an account and sets staked node ID and a node ID', async function () {
-      // select a staked node id betwen 0 and 6 for the test
+      // select a staked node id between 0 and 6 for the test
       const randomNodeId = Math.floor(Math.random() * 6) + 1
       const newAccountId = await createAccountStakedNodeId(
         publicKey,
@@ -256,8 +258,9 @@ describe('#createAccount()', function () {
       try {
         const invalidStakedId = '9.9.999999'
         await createAccountStakedId(publicKey, invalidStakedId)
+        assert.isTrue(false, "Should throw an error");
       } catch (err) {
-        assert.equal(err.code, '322', 'error code 322 for INVALID_STAKING_ID ')
+        assert.equal(err.data.status, 'INVALID_STAKING_ID')
       }
     })
     // Create an account and set the staked node ID to an invalid node
@@ -270,8 +273,9 @@ describe('#createAccount()', function () {
         // select a staked node id greater than 6 for the test
         const invalidNodeId = 10
         await createAccountStakedNodeId(publicKey, invalidNodeId)
+        assert.isTrue(false, "Should throw an error");
       } catch (err) {
-        assert.equal(err.code, '322', 'error code 322 for INVALID_STAKING_ID ')
+        assert.equal(err.data.status, 'INVALID_STAKING_ID')
       }
     })
     // Create an account and set staked account ID with no input
@@ -280,9 +284,9 @@ describe('#createAccount()', function () {
         // select a staked node id greater than 6 for the test
         const noInputStakedId = ''
         await createAccountStakedId(publicKey, noInputStakedId)
-      } catch (err) {
         // confirm error thrown for creation attempt with no input provided for staked account ID
-        assert.equal(err.code, 0, 'error code 0 thrown')
+        assert.isTrue(false, "Should throw an error");
+      } catch (err) {
       }
     })
     // Create an account and set the staked node ID with no input
@@ -291,9 +295,9 @@ describe('#createAccount()', function () {
         // select a staked node id greater than 6 for the test
         const noInputNodeId = ''
         await createAccountStakedNodeId(publicKey, noInputNodeId)
-      } catch (err) {
         // confirm error thrown for creation attempt with no input provided for staked node ID
-        assert.equal(err.code, 0, 'error code 0 thrown')
+        assert.isTrue(false, "Should throw an error");
+      } catch (err) {
       }
     })
     // Create an account and set both a staking account ID and node ID
@@ -325,7 +329,7 @@ describe('#createAccount()', function () {
 
       // confirm pass status with testing for account creation with staked node id set to random between 0 and 6,
       // note: Hedera network does not permit setting of both, so will reject staked account id
-      // to a null value)
+      // to a null value
       expect(stakedAccountIDFromConsensusNode).to.equal(null)
       expect(stakedAccountIDFromMirrorNode).to.equal(null)
       expect(stakedNodeIDFromConsensusNode).to.equal(stakedNodeId)
@@ -366,13 +370,11 @@ describe('#createAccount()', function () {
     })
     // Create an account set the decline rewards value to 5
     it('Creates an account and set the decline rewards value to 5', async function () {
-      let err = false
       try {
-        const newAccountID = await createAccountDeclineRewards(publicKey, 5)
+        await createAccountDeclineRewards(publicKey, 5)
+        assert.isTrue(false, "Should throw an error");
       } catch (error) {
-        err = true
       }
-      expect(err, 'The test should error').to.be.true
     })
   })
 
@@ -397,13 +399,11 @@ describe('#createAccount()', function () {
     it('Creates an account with a memo exceeding 100 characters', async function () {
       const testMemo =
         'testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo123' // 101 characters
-      let err = false
       try {
-        const newAccountID = await createAccountMemo(publicKey, testMemo)
+        await createAccountMemo(publicKey, testMemo)
+        assert.isTrue(false, "Should throw an error");
       } catch (error) {
-        err = true
       }
-      expect(err, 'The test should throw an error').to.be.true
     })
   })
 

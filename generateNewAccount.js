@@ -1,5 +1,4 @@
 import { JSONRPCRequest } from './client.js'
-import { AccountId } from '@hashgraph/sdk'
 
 export async function generateAccountKeys() {
   // Generate new private & public key
@@ -15,50 +14,44 @@ export async function generateAccountKeys() {
 
 export async function createTestAccount(publicKey, initialBal = 1000) {
   // CreateAccount with the JSON-RPC
-  const receipt = await JSONRPCRequest('createAccountAllProperties', {
+  const response = await JSONRPCRequest('createAccount', {
     publicKey: publicKey,
     initialBalance: initialBal,
   })
-  return new AccountId(receipt.accountId).toString()
+  return response.accountId
 }
 
-export async function createAccountReceiverSignature(publicKey, privateKey, initialBalance, isRequired){ 
-  return await JSONRPCRequest('createAccountRequiresSignature', {
+export async function createAccountReceiverSignature(publicKey, privateKey, initialBalance, isRequired){
+  const response = await JSONRPCRequest('createAccount', {
     publicKey: publicKey,
     privateKey: privateKey,
     initialBalance: initialBalance,
     receiverSignatureRequired: isRequired
   })
+  return response.accountId
 }
 
 export async function createTestAccountNoKey() {
   // CreateAccount with the JSON-RPC
-  return await JSONRPCRequest('createAccountAllProperties', {})
-}
-
-export async function createTestAccountInvalidKey(publicKey) {
-  // CreateAccount with the JSON-RPC
-  return await JSONRPCRequest('createAccountAllProperties', {
-    publicKey: publicKey,
-  })
+  return await JSONRPCRequest('createAccount', {})
 }
 
 export async function createAccountStakedId(publicKey, stakedAccountId) {
   // CreateAccount with the JSON-RPC
-  const receipt = await JSONRPCRequest('createAccountAllProperties', {
+  const response = await JSONRPCRequest('createAccount', {
     publicKey: publicKey,
     stakedAccountId: stakedAccountId,
   })
-  return new AccountId(receipt.accountId).toString()
+  return response.accountId
 }
 
 export async function createAccountStakedNodeId(publicKey, stakedNodeId) {
   // CreateAccount with the JSON-RPC
-  const receipt = await JSONRPCRequest('createAccountAllProperties', {
+  const response = await JSONRPCRequest('createAccount', {
     publicKey: publicKey,
     stakedNodeId: stakedNodeId,
   })
-  return new AccountId(receipt.accountId).toString()
+  return response.accountId
 }
 
 export async function createAccountWithStakedAccountAndNodeIds(
@@ -67,12 +60,12 @@ export async function createAccountWithStakedAccountAndNodeIds(
   stakedNodeId
 ) {
   // CreateAccount with the JSON-RPC
-  const receipt = await JSONRPCRequest('createAccountAllProperties', {
+  const response = await JSONRPCRequest('createAccount', {
     publicKey: publicKey,
     stakedAccountId: stakedAccountId,
     stakedNodeId: stakedNodeId,
   })
-  return new AccountId(receipt.accountId).toString()
+  return response.accountId
 }
 
 export async function setFundingAccount(accountId, privateKey) {
@@ -100,18 +93,18 @@ export async function createAccountAsFundingAccount(initialBalance) {
 
 export async function createAccountDeclineRewards(publicKey, condition) {
   // CreateAccount with the JSON-RPC
-  const receipt = await JSONRPCRequest('createAccountAllProperties', {
+  const response = await JSONRPCRequest('createAccount', {
     publicKey: publicKey,
     declineStakingReward: condition,
   })
-  return new AccountId(receipt.accountId).toString()
+  return response.accountId
 }
 
 export async function createAccountMemo(publicKey, memo) {
   // CreateAccount with the JSON-RPC
-  const receipt = await JSONRPCRequest('createAccountAllProperties', {
+  const response = await JSONRPCRequest('createAccount', {
     publicKey: publicKey,
     accountMemo: memo,
   })
-  return new AccountId(receipt.accountId).toString()
+  return response.accountId
 }

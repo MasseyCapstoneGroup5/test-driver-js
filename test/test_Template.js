@@ -1,5 +1,5 @@
 import {JSONRPCRequest} from "../client.js";
-import {AccountId, Client} from "@hashgraph/sdk";
+import {AccountId} from "@hashgraph/sdk";
 import fetch from "node-fetch";
 import {getAccountInfo} from "../SDKEnquiry.js";
 import {setFundingAccount} from "../generateNewAccount.js";
@@ -53,7 +53,7 @@ describe.skip('Hedera functionality we want to test', function () { // a suite o
             await JSONRPCRequest("doSomethingExpectingError", {
                 "parameter": "value"
             })
-            assert.isTrue(false, "doSomething should have thrown an error");
+            assert.isTrue(false, "Should throw an error");
         } catch (err) {
             // check if correct error code is thrown
             // custom hedera errors codes can be found here:

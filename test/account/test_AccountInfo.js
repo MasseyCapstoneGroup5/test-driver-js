@@ -35,15 +35,16 @@ describe('#getAccountInfoTests', function () { // a suite of tests
         });
 
         // CreateAccount with the JSON-RPC
-        newAccountId = await JSONRPCRequest("createAccount", {
-            "publicKey": newPublicKey
+        let response = await JSONRPCRequest("createAccount", {
+            "publicKey": newPublicKey,
+            "initialBalance": 1000
         });
+        newAccountId = response.accountId
 
         // Check if account has been created and has 1000 tinyBar using the JS SDK Client
         let accountBalance = await getBalance(newAccountId);
         let accountBalanceTinybars = BigInt(Number(accountBalance.hbars._valueInTinybar));
-        // TODO: use Longs correctly instead of converting to Int
-        expect(accountBalanceTinybars).to.equal(1000n); // TODO add initial amount as parameter in createAccount
+        expect(accountBalanceTinybars).to.equal(1000n);
     })
 
     it("should query instance of account info to/from bytes", async function () {

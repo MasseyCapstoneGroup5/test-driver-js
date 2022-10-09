@@ -49,9 +49,10 @@ let randomPvtKey, randomPublicKey;  // a random pair to test authorisation failu
    
     // create a new account using JSON-RPC using first public / private key set
     it('should create a new account', async function () {
-        accountId = await JSONRPCRequest("createAccount", {
+        let response = await JSONRPCRequest("createAccount", {
             "publicKey": firstPublicKey
         })
+        accountId = response.accountId;
     });    
 
     it('should retrieve first public key of newly created account', async function () {
@@ -89,33 +90,13 @@ let randomPvtKey, randomPublicKey;  // a random pair to test authorisation failu
 
     // update the PUBLIC & PRIVATE KEY SET on account via JSON-RPC
     it('should test for error in transaction signature', async function () {
-        /**
-         * The transaction signature is not valid
-         * INVALID_SIGNATURE = 7;
-         */  
-         let testStatus;
-         let testarr1 = {
-            "tests":[
-              {"key":{newPublicKey}, "status":"OK"},
-              {"key":{randomPublicKey}, "status":"7"}
-            ]
-            };       
         try {
-            for(let i=0; i<testarr1.tests.length; i++) {
-                let keyStr = Object.values(testarr1.tests[i].key)[0];
-                console.log("\nPublic Key = " + Object.keys(testarr1.tests[i].key)[0]);
-                let statusStr = Object.values(testarr1.tests[i].status).toString();
-                testStatus = statusStr.replace(/,/g,"")
-
-                await updateAccountKey(accountId, keyStr, firstPvtKey, newPvtKey);
-                expect(testStatus).to.equal("OK");
-                console.log("OK " + testStatus);
-            }           
+            await updateAccountKey(accountId, randomPublicKey, firstPvtKey, newPvtKey);
+            assert.isTrue(false, "Should throw an error");
         } catch(err) {
-            // If error is thrown then check error contains expected status code            
-            assert.equal(err.code, testStatus, 'error code is for INVALID_SIGNATURE = 7');
-            console.log("ERR " + testStatus);
-        }        
+            // If error is thrown then check error contains expected status code
+            assert.equal(err.data.status, "INVALID_SIGNATURE");
+        }
     });
 
     it('verify that key set updated', async function () {

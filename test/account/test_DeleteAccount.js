@@ -1,6 +1,6 @@
 import {JSONRPCRequest} from "../../client.js";
 import {getAccountInfo, getBalance} from "../../SDKEnquiry.js";
-import {assert, expect} from "chai";
+import {assert} from "chai";
 import {setFundingAccount} from "../../generateNewAccount.js";
 
 let newAccountId;
@@ -34,9 +34,10 @@ let recipientFinalBal;
             "privateKey": newAccountPrivateKey
         });
         //CreateAccount with the JSON-RPC
-        newAccountId = await JSONRPCRequest("createAccount", {
+        let response = await JSONRPCRequest("createAccount", {
             "publicKey": newPublicKey
-        });
+        })
+        newAccountId = response.accountId;
     });
 
     it('should create recipientAccount via JSON-RPC server', async function () {
@@ -46,9 +47,11 @@ let recipientFinalBal;
             "privateKey": recipientPrivateKey
         });
         //CreateAccount with the JSON-RPC
-        recipientAccountId = await JSONRPCRequest("createAccount", {
+        let response = await JSONRPCRequest("createAccount", {
             "publicKey": recipientPublicKey
         });
+        recipientAccountId = response.accountId;
+
     });
     
     it('should get initial balance of newAccount', async function () {
@@ -64,13 +67,11 @@ let recipientFinalBal;
     it('should delete newAccount and transfer its balance to recipientAccount', async function () {
         // Delete newly created account via the JSON-RPC
         console.log("\nDeleting account " + newAccountId);
-        const deletedAccountId = await JSONRPCRequest("deleteAccount", {
+        await JSONRPCRequest("deleteAccount", {
             "accountId": newAccountId,          
             "accountKey": newAccountPrivateKey,  
             "recipientId": recipientAccountId            
         })
-        // Check if deleted account's ID has been removed
-        expect(deletedAccountId.accountId).to.equal(null);
     });
     /**
     * Further tests for newAccountId will throw failed precheck error: ACCOUNT_DELETED
@@ -94,11 +95,9 @@ let recipientFinalBal;
         try {
             console.log("\nTry to enquire on account " + newAccountId);
             await getAccountInfo(newAccountId);
+            assert.isTrue(false, "Should throw an error");
         } catch (err) {
-            assert.equal(err.status._code, 72, 'error code equals 72 (ACCOUNT_DELETED)');
-            console.log("ERR " + err.status._code);
-            return
+            assert.equal(err.status.toString(), "ACCOUNT_DELETED", 'error code equals 72 (ACCOUNT_DELETED)');
         }
-        assert.isOk(false, 'getAccountInfo must throw error')
     })
 });
