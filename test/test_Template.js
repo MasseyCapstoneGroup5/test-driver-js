@@ -55,10 +55,10 @@ describe.skip('Hedera functionality we want to test', function () { // a suite o
             })
             assert.isTrue(false, "Should throw an error");
         } catch (err) {
-            // check if correct error code is thrown
+            // check if correct error status is thrown
             // custom hedera errors codes can be found here:
             // https://github.com/hashgraph/hedera-protobufs/blob/main/services/response_code.proto
-            assert.equal(err.code, 1, 'error code is INVALID_TRANSACTION ')
+            assert.equal(err.data.status, "INVALID_TRANSACTION")
         }
     })
 });
