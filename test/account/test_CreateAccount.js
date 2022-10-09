@@ -4,6 +4,7 @@ import { getJsonData } from '../../mirrorNodeEnquiry.js'
 import {
   createAccountAsFundingAccount,
   createTestAccount,
+  createAccountReceiverSignature,
   createTestAccountNoKey,
   createTestAccountInvalidKey,
   createAccountStakedId,
@@ -40,24 +41,19 @@ describe('#createAccount()', function () {
   describe('Key signature for each transfer', function () {
     // Create a new account
     it('Creates an account', async function () {
-      try {
-        // initiate request for JSON-RPC server to create a new account
-        const newAccountId = await createTestAccount(publicKey)
-        // query account via consensus node to verify creation
-        const accInf = await getAccountInfo(newAccountId)
-        const accountID = accInf.accountId.toString()
+      // initiate request for JSON-RPC server to create a new account
+      const newAccountId = await createTestAccount(publicKey)
+      // query account via consensus node to verify creation
+      const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)        
+      const accountIDFromConsensusNode = accountInfoFromConsensusNode.accountId.toString()
 
-        // query account via mirror node to confirm availability after creation
-        const respJSON = await getJsonData(accountID)
-        const mirrorID = respJSON.accounts[0].account
+      // query account via mirror node to confirm availability after creation
+      const accountInfoFromMirrorNode = await getJsonData(accountIDFromConsensusNode)
+      const accountIDFromMirrorNode = accountInfoFromMirrorNode.accounts[0].account
 
-        // confirm pass status with assertion testing for account creation
-        expect(newAccountId).to.equal(accountID)
-        expect(newAccountId).to.equal(mirrorID)
-      } catch (err) {
-        // log fail if test does not pass
-        console.warn('*******TEST FAIL********')
-      }
+      // confirm pass status with assertion testing for account creation
+      expect(newAccountId).to.equal(accountIDFromConsensusNode)
+      expect(newAccountId).to.equal(accountIDFromMirrorNode)
     })
     // Create an account with no public key
     it('Creates an account with no public key', async function () {
@@ -68,11 +64,8 @@ describe('#createAccount()', function () {
       try {
         // request JSON-RPC server to try to create a new account without a public key
         await createTestAccountNoKey()
-
-        // log fail if test does not catch error
-        console.warn('*******TEST FAIL********')
       } catch (err) {
-        // confirm fail status for creation attempt without provision of public key
+        // confirm error thrown for creation attempt without provision of public key
         assert.equal(err.code, 26, 'error code is KEY_REQUIRED')
       }
     })
@@ -83,29 +76,25 @@ describe('#createAccount()', function () {
         const invalidPublicKey = crypto.randomBytes(88).toString()
         // request JSON-RPC server to try to create a new account with invalid public key
         await createTestAccountInvalidKey(invalidPublicKey)
-
-        // log fail if test does not catch error
-        console.warn('*******TEST FAIL********')
       } catch (err) {
-        // confirm fail status for creation attempt with an invalid public key
+        // confirm error thrown for creation attempt with an invalid public key
         assert.equal(err.code, 0, 'error code 0 thrown')
       }
     })
     // Set initial balance to -100 HBAR
-    it('Sets initial balance to -1000 TinyBAR', async function () {
+    it('Sets initial balance to -1000 HBar', async function () {
       /**
        * Attempt to set negative initial balance
        * INVALID_INITIAL_BALANCE = 85;
        **/
       try {
-        // set a negative initial balance of minus 1000 Tinybars
-        let initialBalance = -1000
-        await createTestAccount(publicKey, initialBalance)
-
-        // log fail if test does not catch error
-        console.warn('*******TEST FAIL********')
+        // set a negative initial balance of minus 1000 HBars
+        let initialBalance = 1000
+        // convert Hbar to Tinybar at ratio 1: 100,000,000
+        let negativeInitialBalance = initialBalance *= -100000000
+        await createTestAccount(publicKey, negativeInitialBalance)
       } catch (err) {
-        // confirm fail status for creation attempt using a negative initial balance amount
+        // confirm error thrown for creation attempt using a negative initial balance amount
         assert.equal(
           err.code,
           '85',
@@ -126,11 +115,8 @@ describe('#createAccount()', function () {
       await createAccountAsFundingAccount(initialBalance)
       try {
         await createTestAccount(publicKey, payerBalance)
-
-        // log fail if test does not catch error
-        console.warn('*******TEST FAIL********')
       } catch (err) {
-        // confirm fail status for creation attempt where initial balance is more than the
+        // confirm error thrown for creation attempt where initial balance is more than the
         // balance held in the funding account balance
         assert.equal(
           err.code,
@@ -143,8 +129,17 @@ describe('#createAccount()', function () {
   //-----------  Account key signs transactions depositing into account -----------
   // Require a receiving signature when creating account transaction
   describe('Account key signatures to deposit into account', function () {
-    it('Creates account transaction and returns Receiver signature required to true', async function () {})
-    // Creates new account transaction that doesn't require a signature
+    it('Creates account transaction and returns Receiver signature required to true', async function () {
+      // Creates new account transaction that doesn't require a signature 
+      try {
+        const receiverSignatureRequired = false
+        await createAccountReceiverSignature(publicKey, receiverSignatureRequired)
+      } catch (err) {
+        console.log(err.message);
+       // assert.equal(err.code, '322', 'error code 322 for INVALID_STAKING_ID ')
+      }
+    })
+
     it('Creates new account transaction without Receiver signature required', async function () {})
   })
   //----------- Maximum number of tokens that an Account be associated with -----------
@@ -152,43 +147,35 @@ describe('#createAccount()', function () {
     // Creates an account with a default max token association
     //The accounts maxAutomaticTokenAssociations can be queried on the consensus node with AccountInfoQuery
     it('Creates an account with a default max token association', async function () {
-      try {
-        await setFundingAccount(
-          process.env.OPERATOR_ACCOUNT_ID,
-          process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
-        )
-        let { publicKey } = await generateAccountKeys()
-        const receipt = await JSONRPCRequest('createAccountAllProperties', {
-          publicKey: publicKey,
-          initialBalance: 0,
-          maxAutomaticTokenAssociations: 0,
-        })
-        let newAccountId = new AccountId(receipt.accountId).toString()
-        let accInf = await getAccountInfo(newAccountId)
-        assert.equal(accInf.maxAutomaticTokenAssociations, 0)
-      } catch (err) {
-        console.error(err)
-      }
+      await setFundingAccount(
+        process.env.OPERATOR_ACCOUNT_ID,
+        process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
+      )
+      let { publicKey } = await generateAccountKeys()
+      const receipt = await JSONRPCRequest('createAccountAllProperties', {
+        publicKey: publicKey,
+        initialBalance: 0,
+        maxAutomaticTokenAssociations: 0,
+      })
+      let newAccountId = new AccountId(receipt.accountId).toString()
+      let accInf = await getAccountInfo(newAccountId)
+      assert.equal(accInf.maxAutomaticTokenAssociations, 0)
     })
     // Creates an account with max token set to the maximum
     it('Max token set to the maximum', async function () {
-      try {
-        await setFundingAccount(
-          process.env.OPERATOR_ACCOUNT_ID,
-          process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
-        )
-        let { publicKey } = await generateAccountKeys()
-        const receipt = await JSONRPCRequest('createAccountAllProperties', {
-          publicKey: publicKey,
-          initialBalance: 0,
-          maxAutomaticTokenAssociations: 10,
-        })
-        let newAccountId = new AccountId(receipt.accountId).toString()
-        let accInf = await getAccountInfo(newAccountId)
-        assert.equal(accInf.maxAutomaticTokenAssociations, 100)
-      } catch (err) {
-        console.error(err)
-      }
+      await setFundingAccount(
+        process.env.OPERATOR_ACCOUNT_ID,
+        process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
+      )
+      let { publicKey } = await generateAccountKeys()
+      const receipt = await JSONRPCRequest('createAccountAllProperties', {
+        publicKey: publicKey,
+        initialBalance: 0,
+        maxAutomaticTokenAssociations: 10,
+      })
+      let newAccountId = new AccountId(receipt.accountId).toString()
+      let accInf = await getAccountInfo(newAccountId)
+      assert.equal(accInf.maxAutomaticTokenAssociations, 100)
     })
     // Create an account with token association over the max
     it('Max token association over the maximum', async function () {
@@ -209,83 +196,68 @@ describe('#createAccount()', function () {
     })
     // Create an account with a max token association of -1
     it('Max token association of -1', async function () {
-      try {
-        await setFundingAccount(
-          process.env.OPERATOR_ACCOUNT_ID,
-          process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
-        )
-        let { publicKey } = await generateAccountKeys()
-        const receipt = await JSONRPCRequest('createAccountAllProperties', {
-          publicKey: publicKey,
-          initialBalance: 0,
-          maxAutomaticTokenAssociations: -1,
-        })
-        let newAccountId = new AccountId(receipt.accountId).toString()
-        let accInf = await getAccountInfo(newAccountId)
-        assert.equal(accInf.maxAutomaticTokenAssociations, -1)
-      } catch (err) {
-        console.error(err)
-      }
+      await setFundingAccount(
+        process.env.OPERATOR_ACCOUNT_ID,
+        process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
+      )
+      let { publicKey } = await generateAccountKeys()
+      const receipt = await JSONRPCRequest('createAccountAllProperties', {
+        publicKey: publicKey,
+        initialBalance: 0,
+        maxAutomaticTokenAssociations: -1,
+      })
+      let newAccountId = new AccountId(receipt.accountId).toString()
+      let accInf = await getAccountInfo(newAccountId)
+      assert.equal(accInf.maxAutomaticTokenAssociations, -1)
     })
   })
   //----------- Staked ID - ID of the account to which is staking --------------------
   describe('Staked ID, ID of account to which is staking', async function () {
     // Create an account and set staked account ID to operator account ID
     it('Creates an account and sets staked account ID to operator account ID', async function () {
-      try {
-        const newAccountId = await createAccountStakedId(
-          publicKey,
-          process.env.OPERATOR_ACCOUNT_ID
-        )
+      const newAccountId = await createAccountStakedId(
+        publicKey,
+        process.env.OPERATOR_ACCOUNT_ID
+      )
 
-        // query account via consensus node to verify creation
-        const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
-        const accountID = accountInfoFromConsensusNode.accountId.toString()
-        const stakedIDFromConsensusNode =
-          accountInfoFromConsensusNode.stakingInfo.stakedAccountId.toString()
+      // query account via consensus node to verify creation
+      const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
+      const accountID = accountInfoFromConsensusNode.accountId.toString()
+      const stakedIDFromConsensusNode =
+        accountInfoFromConsensusNode.stakingInfo.stakedAccountId.toString()
 
-        // query account via mirror node to confirm availability after creation
-        const respJSON = await getJsonData(accountID)
-        const stakedIDFromMirrorNode = respJSON.accounts[0].staked_account_id
+      // query account via mirror node to confirm availability after creation
+      const respJSON = await getJsonData(accountID)
+      const stakedIDFromMirrorNode = respJSON.accounts[0].staked_account_id
 
-        // confirm pass status with testing for account creation with a set staked account ID
-        expect(stakedIDFromConsensusNode).to.equal(
-          process.env.OPERATOR_ACCOUNT_ID
-        )
-        expect(stakedIDFromMirrorNode).to.equal(process.env.OPERATOR_ACCOUNT_ID)
-      } catch (err) {
-        // log fail if test does not pass
-        console.warn('*******TEST FAIL********')
-      }
+      // confirm pass status with testing for account creation with a set staked account ID
+      expect(stakedIDFromConsensusNode).to.equal(
+        process.env.OPERATOR_ACCOUNT_ID
+      )
+      expect(stakedIDFromMirrorNode).to.equal(process.env.OPERATOR_ACCOUNT_ID)
     })
     // Create an acount and set staked node ID and a node ID
     it('Creates an account and sets staked node ID and a node ID', async function () {
-      try {
-        // select a staked node id betwen 0 and 6 for the test
-        const randomNodeId = Math.floor(Math.random() * 6) + 1
-        const newAccountId = await createAccountStakedNodeId(
-          publicKey,
-          randomNodeId
-        )
+      // select a staked node id betwen 0 and 6 for the test
+      const randomNodeId = Math.floor(Math.random() * 6) + 1
+      const newAccountId = await createAccountStakedNodeId(
+        publicKey,
+        randomNodeId
+      )
 
-        // query account via consensus node to verify creation
-        const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
-        const accountID = accountInfoFromConsensusNode.accountId.toString()
-        const stakedNodeIDFromConsensusNode =
-          accountInfoFromConsensusNode.stakingInfo.stakedNodeId.low.toString()
+      // query account via consensus node to verify creation
+      const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
+      const accountID = accountInfoFromConsensusNode.accountId.toString()
+      const stakedNodeIDFromConsensusNode =
+        accountInfoFromConsensusNode.stakingInfo.stakedNodeId.low.toString()
 
-        // query account via mirror node to confirm availability after creation
-        const respJSON = await getJsonData(accountID)
-        const stakedNodeIDFromMirrorNode = respJSON.accounts[0].staked_node_id
+      // query account via mirror node to confirm availability after creation
+      const respJSON = await getJsonData(accountID)
+      const stakedNodeIDFromMirrorNode = respJSON.accounts[0].staked_node_id
 
-        // confirm pass status with testing for account creation with a set staked node ID
-        expect(Number(stakedNodeIDFromConsensusNode)).to.equal(randomNodeId)
-        expect(Number(stakedNodeIDFromMirrorNode)).to.equal(randomNodeId)
-      } catch (err) {
-        console.log(err.message)
-        // log fail if test does not pass
-        console.warn('*******TEST FAIL********')
-      }
+      // confirm pass status with testing for account creation with a set staked node ID
+      expect(Number(stakedNodeIDFromConsensusNode)).to.equal(randomNodeId)
+      expect(Number(stakedNodeIDFromMirrorNode)).to.equal(randomNodeId)
     })
     // Create an account and set the staked account ID to an invalid ID
     it('Creates an account and sets the staked account ID to an invalid ID', async function () {
@@ -296,9 +268,6 @@ describe('#createAccount()', function () {
       try {
         const invalidStakedId = '9.9.999999'
         await createAccountStakedId(publicKey, invalidStakedId)
-
-        // log fail if test does not catch error
-        console.warn('*******TEST FAIL********')
       } catch (err) {
         assert.equal(err.code, '322', 'error code 322 for INVALID_STAKING_ID ')
       }
@@ -313,9 +282,6 @@ describe('#createAccount()', function () {
         // select a staked node id greater than 6 for the test
         const invalidNodeId = 10
         await createAccountStakedNodeId(publicKey, invalidNodeId)
-
-        // log fail if test does not catch error
-        console.warn('*******TEST FAIL********')
       } catch (err) {
         assert.equal(err.code, '322', 'error code 322 for INVALID_STAKING_ID ')
       }
@@ -326,11 +292,8 @@ describe('#createAccount()', function () {
         // select a staked node id greater than 6 for the test
         const noInputStakedId = ''
         await createAccountStakedId(publicKey, noInputStakedId)
-
-        // log fail if test does not catch error
-        console.warn('*******TEST FAIL********')
       } catch (err) {
-        // confirm fail status for creation attempt with no input provided for staked account ID
+        // confirm error thrown for creation attempt with no input provided for staked account ID
         assert.equal(err.code, 0, 'error code 0 thrown')
       }
     })
@@ -340,54 +303,45 @@ describe('#createAccount()', function () {
         // select a staked node id greater than 6 for the test
         const noInputNodeId = ''
         await createAccountStakedNodeId(publicKey, noInputNodeId)
-
-        // log fail if test does not catch error
-        console.warn('*******TEST FAIL********')
       } catch (err) {
-        // confirm fail status for creation attempt with no input provided for staked node ID
+        // confirm error thrown for creation attempt with no input provided for staked node ID
         assert.equal(err.code, 0, 'error code 0 thrown')
       }
     })
     // Create an account and set both a staking account ID and node ID
     it('Creates an account and sets both a staking account ID and node ID', async function () {
-      try {
-        // set staked account ID to operator account ID
-        const stakedAccountId = process.env.OPERATOR_ACCOUNT_ID
+      // set staked account ID to operator account ID
+      const stakedAccountId = process.env.OPERATOR_ACCOUNT_ID
 
-        // select a staked node id betwen 0 and 6 for the test
-        const nodeId = Math.floor(Math.random() * 6) + 1
+      // select a staked node id betwen 0 and 6 for the test
+      const stakedNodeId = Math.floor(Math.random() * 6) + 1
 
-        // initiate request for JSON-RPC server to create a new account with both StakedAccountId and StakedNodeId
-        const newAccountId = await createAccountWithStakedAccountAndNodeIds(
-          publicKey,
-          stakedAccountId,
-          nodeId
-        )
+      // initiate request for JSON-RPC server to create a new account with both StakedAccountId and StakedNodeId
+      const newAccountId = await createAccountWithStakedAccountAndNodeIds(
+        publicKey,
+        stakedAccountId,
+        stakedNodeId
+      )
+      // query account via consensus node to verify creation
+      const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
+      const accountID = accountInfoFromConsensusNode.accountId.toString()
+      const stakedAccountIDFromConsensusNode =
+        accountInfoFromConsensusNode.stakingInfo.stakedAccountId
+      const stakedNodeIDFromConsensusNode =
+        accountInfoFromConsensusNode.stakingInfo.stakedNodeId.low
 
-        // query account via consensus node to verify creation
-        const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
-        const accountID = accountInfoFromConsensusNode.accountId.toString()
-        const stakedIDFromConsensusNode =
-          accountInfoFromConsensusNode.stakingInfo.stakedAccountId
-        const stakedNodeIDFromConsensusNode =
-          accountInfoFromConsensusNode.stakingInfo.stakedNodeId.low
+      // query account via mirror node to confirm availability after creation
+      const respJSON = await getJsonData(accountID)
+      const stakedAccountIDFromMirrorNode = respJSON.accounts[0].staked_account_id
+      const stakedNodeIDFromMirrorNode = respJSON.accounts[0].staked_node_id
 
-        // query account via mirror node to confirm availability after creation
-        const respJSON = await getJsonData(accountID)
-        const stakedIDFromMirrorNode = respJSON.accounts[0].staked_account_id
-        const stakedNodeIDFromMirrorNode = respJSON.accounts[0].staked_node_id
-
-        // confirm pass status with testing for account creation with staked node id set to random between 0 and 6
-        // and staked account id set to null -- see: https://hedera.com/blog/staking-on-hedera-for-developers-back-to-the-basics
-        expect(stakedIDFromConsensusNode).to.equal(null)
-        expect(stakedIDFromMirrorNode).to.equal(null)
-        expect(stakedNodeIDFromConsensusNode).to.equal(nodeId)
-        expect(stakedNodeIDFromMirrorNode).to.equal(nodeId)
-      } catch (err) {
-        console.log(err.message)
-        // if error then record as fail
-        console.error('*******TEST FAIL********')
-      }
+      // confirm pass status with testing for account creation with staked node id set to random between 0 and 6,
+      // note: Hedera network does not permit setting of both, so will reject staked account id
+      // to a null value)
+      expect(stakedAccountIDFromConsensusNode).to.equal(null)
+      expect(stakedAccountIDFromMirrorNode).to.equal(null)
+      expect(stakedNodeIDFromConsensusNode).to.equal(stakedNodeId)
+      expect(stakedNodeIDFromMirrorNode).to.equal(stakedNodeId)
     })
   })
   //----------- If true - account declines receiving a staking reward -----------
@@ -461,15 +415,9 @@ describe('#createAccount()', function () {
       } catch (error) {
         err = true
       }
-
       expect(err, 'The test should throw an error').to.be.true
     })
   })
 
   return Promise.resolve()
-
-  function convertToTinybar(hbarVal) {
-    // transforms Hbar to Tinybar at ratio 1: 100,000,000
-    return BigInt(Number(hbarVal.hbars._valueInTinybar))
-  }
 })
