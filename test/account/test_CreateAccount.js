@@ -19,7 +19,7 @@ import crypto from 'crypto'
 import { assert, expect } from 'chai'
 import { AccountId, ContractFunctionSelector } from '@hashgraph/sdk'
 
-let publicKey
+let publicKey, privateKey
 /**
  * Test Create account and compare results with js SDK
  */
@@ -31,7 +31,7 @@ describe('#createAccount()', function () {
       process.env.OPERATOR_ACCOUNT_ID,
       process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
     )
-    ;({ publicKey } = await generateAccountKeys())
+    ;({ publicKey, privateKey } = await generateAccountKeys())
   })
   after(async function () {
     await JSONRPCRequest('reset')
@@ -130,21 +130,22 @@ describe('#createAccount()', function () {
   // Require a receiving signature when creating account transaction
   describe('Account key signatures to deposit into account', function () {
     it('Creates account transaction and returns Receiver signature required to true', async function () {
-      try {
+        // Creates new account that always requires transactions to have receiving signature 
         const receiverSignatureRequired = true
-        const newAccount = await createAccountReceiverSignature(publicKey, 1, receiverSignatureRequired)
+        const newAccount = await createAccountReceiverSignature(publicKey, privateKey, 1, receiverSignatureRequired)
         const newAccountId = "0.0." + newAccount.accountId.num.low
 
         // query account via consensus node to verify creation
         const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
-        console.log( accountInfoFromConsensusNode);
-
-
-      } catch(err) {
-        console.log("err" + err)
-      }
-      // Creates new account that always requires transactions to have receiving signature 
-
+        const recvdSignatureStatusFromConsensusNode = accountInfoFromConsensusNode.isReceiverSignatureRequired
+  
+        // query account via mirror node to confirm availability after creation
+        const respJSON = await getJsonData(newAccountId) 
+        const recvdSignatureStatusFromMirrorNode = respJSON.accounts[0].receiver_sig_required
+  
+        // confirm pass status with testing for account creation with requirement for signature set to true
+        expect(Boolean(recvdSignatureStatusFromConsensusNode)).to.equal(true)
+        expect(Boolean(recvdSignatureStatusFromMirrorNode)).to.equal(true)
     })
     // Creates new account that doesn't require all transactions to have receiving signature 
     it('Creates new account transaction without Receiver signature required', async function () {})

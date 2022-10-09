@@ -22,9 +22,10 @@ export async function createTestAccount(publicKey, initialBal = 1000) {
   return new AccountId(receipt.accountId).toString()
 }
 
-export async function createAccountReceiverSignature(publicKey, initialBalance, isRequired){ 
+export async function createAccountReceiverSignature(publicKey, privateKey, initialBalance, isRequired){ 
   return await JSONRPCRequest('createAccountRequiresSignature', {
     publicKey: publicKey,
+    privateKey: privateKey,
     initialBalance: initialBalance,
     receiverSignatureRequired: isRequired
   })
