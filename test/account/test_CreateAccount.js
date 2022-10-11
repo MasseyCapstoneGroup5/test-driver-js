@@ -81,17 +81,17 @@ describe('#createAccount()', function () {
         assert.equal(err.code, -32603, 'Internal error')
       }
     })
-    // Set initial balance to -100 HBAR
-    it('Sets initial balance to -1000 HBar', async function () {
+    // Set initial balance to -1 HBAR
+    it('Sets initial balance to -1 HBar', async function () {
       /**
        * Attempt to set negative initial balance
        * INVALID_INITIAL_BALANCE = 85;
        **/
       try {
-        // set a negative initial balance of minus 1000 HBars
-        let initialBalance = 1000
+        // set a negative initial balance of minus 1 HBar
+        let initialBalance = -1
         // convert Hbar to Tinybar at ratio 1: 100,000,000
-        let negativeInitialBalance = initialBalance *= -100000000
+        let negativeInitialBalance = initialBalance *= 100000000
         await createTestAccount(publicKey, negativeInitialBalance)
         assert.isTrue(false, "Should throw an error");
       } catch (err) {
@@ -132,14 +132,16 @@ describe('#createAccount()', function () {
     it('Creates account transaction and returns Receiver signature required to true', async function () {
         // Creates new account that always requires transactions to have receiving signature
         const receiverSignatureRequired = true
-        const newAccountId = await createAccountReceiverSignature(publicKey, privateKey, 1, receiverSignatureRequired)
+        const initialBalance = 1
+        const newAccountId = await createAccountReceiverSignature(publicKey, privateKey, initialBalance, receiverSignatureRequired)
 
         // query account via consensus node to verify creation
         const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
+        const accountIDFromConsensusNode = accountInfoFromConsensusNode.accountId.toString()
         const recvdSignatureStatusFromConsensusNode = accountInfoFromConsensusNode.isReceiverSignatureRequired
   
         // query account via mirror node to confirm availability after creation
-        const respJSON = await getJsonData(newAccountId)
+        const respJSON = await getJsonData(accountIDFromConsensusNode)
         const recvdSignatureStatusFromMirrorNode = respJSON.accounts[0].receiver_sig_required
   
         // confirm pass status with testing for account creation with requirement for signature set to true
@@ -404,10 +406,6 @@ describe('#createAccount()', function () {
       }
     })
   })
-
+  
   return Promise.resolve()
-  function convertToTinybar(hbarVal) {
-    // transforms Hbar to Tinybar at ratio 1: 100,000,000
-    return BigInt(Number(hbarVal.hbars._valueInTinybar))
-  }
 })

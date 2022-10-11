@@ -12,8 +12,8 @@ export async function generateAccountKeys() {
   }
 }
 
-export async function createTestAccount(publicKey, initialBal = 1000) {
-  // CreateAccount with the JSON-RPC
+export async function createTestAccount(publicKey, initialBal = 10000000000) {
+  // CreateAccount with the JSON-RPC, initial balance defaults to 10,000,000,000 tinybars (100Hbar) 
   const response = await JSONRPCRequest('createAccount', {
     publicKey: publicKey,
     initialBalance: initialBal,
@@ -108,3 +108,4 @@ export async function createAccountMemo(publicKey, memo) {
   })
   return response.accountId
 }
+
