@@ -1,4 +1,4 @@
-``# test-driver-js
+# test-driver-js
 
 ## Setup
 
@@ -22,13 +22,20 @@ Enter Project directory
 * Start your [hedera-local-node](https://github.com/hashgraph/hedera-local-node)
 * rename `.env.custom_node` to `.env`
 
+### Start a JSON-RPC server
+
+Start only the JSON-RPC sever for the SDK you want to test.
+
+#### Available JSON-RPC servers:
+* [JSON-RPC JS](https://github.com/MasseyCapstoneGroup5/json-rpc-js-sdk)
+* [JSON-RPC Java](https://github.com/MasseyCapstoneGroup5/json-rpc-java)
+
+
 ### Install and run
 
 Install packages with npm
 
     npm install
-    
-Start the [JSON-RPC Server](https://github.com/MasseyCapstoneGroup5/json-rpc-js-sdk)
 
 
 Run specific test file
