@@ -24,17 +24,15 @@ describe('#createAccount()', function () {
   this.timeout(15000)
   let publicKey, privateKey
 
-  before(async function () {
+  beforeEach(async function () {
+    ({ publicKey, privateKey } = await generateAccountKeys());
     await setFundingAccount(
       process.env.OPERATOR_ACCOUNT_ID,
       process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
-    );
+    )
   })
-  after(async function () {
+  afterEach(async function () {
     await JSONRPCRequest('reset')
-  })
-  beforeEach(async function () {
-    ({ publicKey, privateKey } = await generateAccountKeys())
   })
 
   //----------- Key is needed to sign each transfer -----------
