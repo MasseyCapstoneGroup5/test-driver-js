@@ -95,9 +95,10 @@ let recipientFinalBal;
         try {
             console.log("\nTry to enquire on account " + newAccountId);
             await getAccountInfo(newAccountId);
-            assert.isTrue(false, "Should throw an error");
         } catch (err) {
-            assert.equal(err.status.toString(), "ACCOUNT_DELETED", 'error code equals 72 (ACCOUNT_DELETED)');
+            assert.equal(err.status.toString(), "ACCOUNT_DELETED");
+            return
         }
+        assert.fail("Should throw an error")
     })
 });

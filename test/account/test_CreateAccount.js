@@ -62,11 +62,12 @@ describe('#createAccount()', function () {
       try {
         // request JSON-RPC server to try to create a new account without a public key
         await createTestAccountNoKey()
-        assert.isTrue(false, "Should throw an error");
       } catch (err) {
         // confirm error thrown for creation attempt without provision of public key
-        assert.equal(err.data.status, "KEY_REQUIRED")
+        assert.equal(err.data.status, "KEY_REQUIRED");
+        return
       }
+      assert.fail("Should throw an error")
     })
     // Create an account with an invalid public key
     it('Creates an account with an invalid public key', async function () {
@@ -75,11 +76,12 @@ describe('#createAccount()', function () {
         const invalidPublicKey = crypto.randomBytes(88).toString()
         // request JSON-RPC server to try to create a new account with invalid public key
         await createTestAccount(invalidPublicKey)
-        assert.isTrue(false, "Should throw an error");
       } catch (err) {
         // confirm error thrown for creation attempt with an invalid public key
-        assert.equal(err.code, -32603, 'Internal error')
+        assert.equal(err.code, -32603, 'Internal error');
+        return
       }
+      assert.fail("Should throw an error")
     })
     // Set initial balance to -1 HBAR
     it('Sets initial balance to -1 HBar', async function () {
@@ -93,14 +95,15 @@ describe('#createAccount()', function () {
         // convert Hbar to Tinybar at ratio 1: 100,000,000
         let negativeInitialBalance = initialBalance *= 100000000
         await createTestAccount(publicKey, negativeInitialBalance)
-        assert.isTrue(false, "Should throw an error");
       } catch (err) {
         // confirm error thrown for creation attempt using a negative initial balance amount
         assert.equal(
           err.data.status,
           'INVALID_INITIAL_BALANCE',
-        )
+        );
+        return
       }
+      assert.fail("Should throw an error")
     })
     // Set the initial balance to more than operator balance
     it('Sets initial balance to more than operator balance', async function () {
@@ -115,15 +118,16 @@ describe('#createAccount()', function () {
       await createAccountAsFundingAccount(initialBalance)
       try {
         await createTestAccount(publicKey, payerBalance)
-        assert.isTrue(false, "Should throw an error");
       } catch (err) {
         // confirm error thrown for creation attempt where initial balance is more than the
         // balance held in the funding account balance
         assert.equal(
           err.data.status,
           'INSUFFICIENT_PAYER_BALANCE',
-        )
+        );
+        return
       }
+      assert.fail("Should throw an error")
     })
   })
   //-----------  Account key signs transactions depositing into account -----------
@@ -184,10 +188,11 @@ describe('#createAccount()', function () {
           initialBalance: 0,
           maxAutomaticTokenAssociations: 2000,
         })
-        assert.isTrue(false, "Should throw an error");
       } catch (err) {
-        assert.equal(err.data.status, 'INSUFFICIENT_TX_FEE')
+        assert.equal(err.data.status, 'INSUFFICIENT_TX_FEE');
+        return
       }
+      assert.fail("Should throw an error")
     })
     // Create an account with a max token association of -1
     it('Max token association of -1', async function () {
@@ -258,10 +263,11 @@ describe('#createAccount()', function () {
       try {
         const invalidStakedId = '9.9.999999'
         await createAccountStakedId(publicKey, invalidStakedId)
-        assert.isTrue(false, "Should throw an error");
       } catch (err) {
-        assert.equal(err.data.status, 'INVALID_STAKING_ID')
+        assert.equal(err.data.status, 'INVALID_STAKING_ID');
+        return
       }
+      assert.fail("Should throw an error")
     })
     // Create an account and set the staked node ID to an invalid node
     it('Creates an account and sets the staked node ID to an invalid node', async function () {
@@ -273,10 +279,11 @@ describe('#createAccount()', function () {
         // select a staked node id greater than 6 for the test
         const invalidNodeId = 10
         await createAccountStakedNodeId(publicKey, invalidNodeId)
-        assert.isTrue(false, "Should throw an error");
       } catch (err) {
-        assert.equal(err.data.status, 'INVALID_STAKING_ID')
+        assert.equal(err.data.status, 'INVALID_STAKING_ID');
+        return
       }
+      assert.fail("Should throw an error")
     })
     // Create an account and set staked account ID with no input
     it('Creates an account and sets staked account ID with no input', async function () {
@@ -285,20 +292,10 @@ describe('#createAccount()', function () {
         const noInputStakedId = ''
         await createAccountStakedId(publicKey, noInputStakedId)
         // confirm error thrown for creation attempt with no input provided for staked account ID
-        assert.isTrue(false, "Should throw an error");
       } catch (err) {
+        return
       }
-    })
-    // Create an account and set the staked node ID with no input
-    it('Creates an account and sets the staked node ID with no input', async function () {
-      try {
-        // select a staked node id greater than 6 for the test
-        const noInputNodeId = ''
-        await createAccountStakedNodeId(publicKey, noInputNodeId)
-        // confirm error thrown for creation attempt with no input provided for staked node ID
-        assert.isTrue(false, "Should throw an error");
-      } catch (err) {
-      }
+      assert.fail("Should throw an error")
     })
     // Create an account and set both a staking account ID and node ID
     it('Creates an account and sets both a staking account ID and node ID', async function () {
@@ -372,9 +369,10 @@ describe('#createAccount()', function () {
     it('Creates an account and set the decline rewards value to 5', async function () {
       try {
         await createAccountDeclineRewards(publicKey, 5)
-        assert.isTrue(false, "Should throw an error");
       } catch (error) {
+          return
       }
+      assert.fail("Should throw an error")
     })
   })
 
@@ -401,9 +399,10 @@ describe('#createAccount()', function () {
         'testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo123' // 101 characters
       try {
         await createAccountMemo(publicKey, testMemo)
-        assert.isTrue(false, "Should throw an error");
       } catch (error) {
+          return
       }
+      assert.fail("Should throw an error")
     })
   })
   

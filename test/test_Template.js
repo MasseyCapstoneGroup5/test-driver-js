@@ -3,6 +3,7 @@ import {AccountId} from "@hashgraph/sdk";
 import fetch from "node-fetch";
 import {getAccountInfo} from "../SDKEnquiry.js";
 import {setFundingAccount} from "../generateNewAccount.js";
+import {assert} from "chai";
 
 /**
  * Explain what this test suite is for here
@@ -19,8 +20,10 @@ describe.skip('Hedera functionality we want to test', function () { // a suite o
     });
 
     // Before/after each test can also be used
-    beforeEach(function () {});
-    afterEach(function () {});
+    beforeEach(function () {
+    });
+    afterEach(function () {
+    });
 
     it('should do something successfully', async function () {
         // 1. Call JSON-RPC (Make sure it is running first)
@@ -53,12 +56,13 @@ describe.skip('Hedera functionality we want to test', function () { // a suite o
             await JSONRPCRequest("doSomethingExpectingError", {
                 "parameter": "value"
             })
-            assert.isTrue(false, "Should throw an error");
         } catch (err) {
             // check if correct error status is thrown
             // custom hedera errors codes can be found here:
             // https://github.com/hashgraph/hedera-protobufs/blob/main/services/response_code.proto
-            assert.equal(err.data.status, "INVALID_TRANSACTION")
+            assert.equal(err.data.status, "INVALID_TRANSACTION");
+            return
         }
+        assert.fail("Should throw an error")
     })
 });

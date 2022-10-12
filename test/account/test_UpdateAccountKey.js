@@ -84,7 +84,7 @@ let randomPvtKey, randomPublicKey;  // a random pair to test authorisation failu
             
         } catch(err) {
             // If error is thrown then check error contains expected status message
-            assert.equal(err.code, 7, 'error code is for INVALID_SIGNATURE');
+            assert.equal(err.data.status, "INVALID_SIGNATURE");
         }        
     });
 
@@ -92,11 +92,12 @@ let randomPvtKey, randomPublicKey;  // a random pair to test authorisation failu
     it('should test for error in transaction signature', async function () {
         try {
             await updateAccountKey(accountId, randomPublicKey, firstPvtKey, newPvtKey);
-            assert.isTrue(false, "Should throw an error");
         } catch(err) {
             // If error is thrown then check error contains expected status code
             assert.equal(err.data.status, "INVALID_SIGNATURE");
+            return
         }
+        assert.fail("Should throw an error");
     });
 
     it('verify that key set updated', async function () {
