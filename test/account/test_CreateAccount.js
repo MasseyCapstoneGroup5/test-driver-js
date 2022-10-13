@@ -13,6 +13,7 @@ import {
   generateAccountKeys,
   setFundingAccount,
   createAccountMemo,
+  getNodeType
 } from '../../generateNewAccount.js'
 import crypto from 'crypto'
 import { assert, expect } from 'chai'
@@ -22,9 +23,10 @@ import { assert, expect } from 'chai'
  */
 describe('#createAccount()', function () {
   this.timeout(15000)
-  let publicKey, privateKey
+  let publicKey, privateKey, local
 
   beforeEach(async function () {
+    local = await getNodeType(process.env.NODE_TYPE);
     ({ publicKey, privateKey } = await generateAccountKeys());
     await setFundingAccount(
       process.env.OPERATOR_ACCOUNT_ID,
@@ -249,28 +251,31 @@ describe('#createAccount()', function () {
       )
       expect(stakedIDFromMirrorNode).to.equal(process.env.OPERATOR_ACCOUNT_ID)
     })
-    // Create an account and set staked node ID and a node ID
-    it('Creates an account and sets staked node ID and a node ID', async function () {
-      // select a staked node id between 0 and 6 for the test
-      const randomNodeId = Math.floor(Math.random() * 6) + 1
-      const newAccountId = await createAccountStakedNodeId(
-        publicKey,
-        randomNodeId
-      )
+    // Create an account and set staked node ID and a node ID    
+      it('Creates an account and sets staked node ID and a node ID', async function () {
+        if(local) this.skip()
+        else {
+          // select a staked node id between 0 and 6 for the test
+          const randomNodeId = Math.floor(Math.random() * 6) + 1
+          const newAccountId = await createAccountStakedNodeId(
+            publicKey,
+            randomNodeId
+          )
 
-      // query account via consensus node to verify creation
-      const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
-      const accountID = accountInfoFromConsensusNode.accountId.toString()
-      const stakedNodeIDFromConsensusNode =
-        accountInfoFromConsensusNode.stakingInfo.stakedNodeId.low.toString()
+          // query account via consensus node to verify creation
+          const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
+          const accountID = accountInfoFromConsensusNode.accountId.toString()
+          const stakedNodeIDFromConsensusNode =
+            accountInfoFromConsensusNode.stakingInfo.stakedNodeId.low.toString()
 
-      // query account via mirror node to confirm availability after creation
-      const respJSON = await getJsonData(accountID)
-      const stakedNodeIDFromMirrorNode = respJSON.accounts[0].staked_node_id
+          // query account via mirror node to confirm availability after creation
+          const respJSON = await getJsonData(accountID)
+          const stakedNodeIDFromMirrorNode = respJSON.accounts[0].staked_node_id
 
-      // confirm pass status with testing for account creation with a set staked node ID
-      expect(Number(stakedNodeIDFromConsensusNode)).to.equal(randomNodeId)
-      expect(Number(stakedNodeIDFromMirrorNode)).to.equal(randomNodeId)
+          // confirm pass status with testing for account creation with a set staked node ID
+          expect(Number(stakedNodeIDFromConsensusNode)).to.equal(randomNodeId)
+          expect(Number(stakedNodeIDFromMirrorNode)).to.equal(randomNodeId)
+        }
     })
     // Create an account and set the staked account ID to an invalid ID
     it('Creates an account and sets the staked account ID to an invalid ID', async function () {
@@ -317,39 +322,42 @@ describe('#createAccount()', function () {
     })
     // Create an account and set both a staking account ID and node ID
     it('Creates an account and sets both a staking account ID and node ID', async function () {
-      // set staked account ID to operator account ID
-      const stakedAccountId = process.env.OPERATOR_ACCOUNT_ID
+      if(local) this.skip()
+      else {
+        // set staked account ID to operator account ID
+        const stakedAccountId = process.env.OPERATOR_ACCOUNT_ID
 
-      // select a staked node id betwen 0 and 6 for the test
-      const stakedNodeId = Math.floor(Math.random() * 6) + 1
+        // select a staked node id betwen 0 and 6 for the test
+        const stakedNodeId = Math.floor(Math.random() * 6) + 1
 
-      // initiate request for JSON-RPC server to create a new account with both StakedAccountId and StakedNodeId
-      const newAccountId = await createAccountWithStakedAccountAndNodeIds(
-        publicKey,
-        stakedAccountId,
-        stakedNodeId
-      )
-      // query account via consensus node to verify creation
-      const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
-      const accountID = accountInfoFromConsensusNode.accountId.toString()
-      const stakedAccountIDFromConsensusNode =
-        accountInfoFromConsensusNode.stakingInfo.stakedAccountId
-      const stakedNodeIDFromConsensusNode =
-        accountInfoFromConsensusNode.stakingInfo.stakedNodeId.low
+        // initiate request for JSON-RPC server to create a new account with both StakedAccountId and StakedNodeId
+        const newAccountId = await createAccountWithStakedAccountAndNodeIds(
+          publicKey,
+          stakedAccountId,
+          stakedNodeId
+        )
+        // query account via consensus node to verify creation
+        const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
+        const accountID = accountInfoFromConsensusNode.accountId.toString()
+        const stakedAccountIDFromConsensusNode =
+          accountInfoFromConsensusNode.stakingInfo.stakedAccountId
+        const stakedNodeIDFromConsensusNode =
+          accountInfoFromConsensusNode.stakingInfo.stakedNodeId.low
 
-      // query account via mirror node to confirm availability after creation
-      const respJSON = await getJsonData(accountID)
-      const stakedAccountIDFromMirrorNode = respJSON.accounts[0].staked_account_id
-      const stakedNodeIDFromMirrorNode = respJSON.accounts[0].staked_node_id
+        // query account via mirror node to confirm availability after creation
+        const respJSON = await getJsonData(accountID)
+        const stakedAccountIDFromMirrorNode = respJSON.accounts[0].staked_account_id
+        const stakedNodeIDFromMirrorNode = respJSON.accounts[0].staked_node_id
 
-      // confirm pass status with testing for account creation with staked node id set to random between 0 and 6,
-      // note: Hedera network does not permit setting of both, so will reject staked account id
-      // to a null value
-      expect(stakedAccountIDFromConsensusNode).to.equal(null)
-      expect(stakedAccountIDFromMirrorNode).to.equal(null)
-      expect(stakedNodeIDFromConsensusNode).to.equal(stakedNodeId)
-      expect(stakedNodeIDFromMirrorNode).to.equal(stakedNodeId)
-    })
+        // confirm pass status with testing for account creation with staked node id set to random between 0 and 6,
+        // note: Hedera network does not permit setting of both, so will reject staked account id
+        // to a null value
+        expect(stakedAccountIDFromConsensusNode).to.equal(null)
+        expect(stakedAccountIDFromMirrorNode).to.equal(null)
+        expect(stakedNodeIDFromConsensusNode).to.equal(stakedNodeId)
+        expect(stakedNodeIDFromMirrorNode).to.equal(stakedNodeId)
+      }
+    })  
   })
   //----------- If true - account declines receiving a staking reward -----------
   describe('Account declines receiving a staking reward', async function () {
