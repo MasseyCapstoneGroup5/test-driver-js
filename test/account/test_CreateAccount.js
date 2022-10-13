@@ -153,7 +153,25 @@ describe('#createAccount()', function () {
         expect(Boolean(recvdSignatureStatusFromMirrorNode)).to.equal(true)
     })
     // Creates new account that doesn't require all transactions to have receiving signature 
-    it('Creates new account transaction without Receiver signature required', async function () {})
+    it('Creates new account transaction without Receiver signature required', async function () {
+    // Creates new account that always requires transactions to have receiving signature
+       const receiverSignatureRequired = false
+       const initialBalance = 1
+       const newAccountId = await createAccountReceiverSignature(publicKey, privateKey, initialBalance, receiverSignatureRequired)
+
+       // query account via consensus node to verify creation
+       const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
+       const accountIDFromConsensusNode = accountInfoFromConsensusNode.accountId.toString()
+       const recvdSignatureStatusFromConsensusNode = accountInfoFromConsensusNode.isReceiverSignatureRequired
+ 
+       // query account via mirror node to confirm availability after creation
+       const respJSON = await getJsonData(accountIDFromConsensusNode)
+       const recvdSignatureStatusFromMirrorNode = respJSON.accounts[0].receiver_sig_required
+ 
+       // confirm pass status with testing for account creation with requirement for signature set to true
+       expect(Boolean(recvdSignatureStatusFromConsensusNode)).to.equal(false)
+       expect(Boolean(recvdSignatureStatusFromMirrorNode)).to.equal(false)
+    })
   })
   //----------- Maximum number of tokens that an Account be associated with -----------
   describe('Max Token Association', function () {
