@@ -109,11 +109,12 @@ export async function createAccountMemo(publicKey, memo) {
   return response.accountId
 }
 
-export async function getNodeType(localNodeBoolString) {
+export async function getNodeType(useNode) {
   // check if tests are running or local node or testnet
-  if(localNodeBoolString=='true') {
+  if(useNode=='local') {
     return true
-  } else {
+  } else if(useNode=='testnet') {
     return false
-  } 
+  }
+  else { return null } 
 }
