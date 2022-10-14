@@ -179,26 +179,50 @@ describe('#createAccount()', function () {
   describe('Max Token Association', function () {
     // Creates an account with a default max token association
     //The accounts maxAutomaticTokenAssociations can be queried on the consensus node with AccountInfoQuery
-    it('Creates an account with a default max token association', async function () {
+    it('Default max token association', async function () {
       const response = await JSONRPCRequest('createAccount', {
         publicKey: publicKey,
         initialBalance: 0,
         maxAutomaticTokenAssociations: 0,
       })
       let newAccountId = response.accountId
-      let accInf = await getAccountInfo(newAccountId)
-      assert.equal(accInf.maxAutomaticTokenAssociations, 0)
+      try{
+        // consensus node account
+        const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
+        const acctMaxTokenConsensus = accountInfoFromConsensusNode.maxAutomaticTokenAssociations
+        // mirror node account
+        const respJSON = await getJsonData(accountIDFromConsensusNode)
+        const acctMaxTokenMirror = respJSON.accounts[0].maxautomatictokenassociations
+        assert.equal(acctMaxTokenConsensus, 0)
+        assert.equal(acctMaxTokenMirror, 0)
+      }
+      catch (err) {
+        console.log(err)
+        console.log(err.status.data)
+      }
     })
     // Creates an account with max token set to the maximum
-    it('Max token set to the maximum', async function () {
+    it('Max token set to the maximum (No max in 0.25 Mainnet)', async function () {
       const response = await JSONRPCRequest('createAccount', {
         publicKey: publicKey,
         initialBalance: 0,
         maxAutomaticTokenAssociations: 10,
       })
       let newAccountId = response.accountId
-      let accInf = await getAccountInfo(newAccountId)
-      assert.equal(accInf.maxAutomaticTokenAssociations, 10)
+      try{
+        // consensus node account
+        const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
+        const acctMaxTokenConsensus = accountInfoFromConsensusNode.maxAutomaticTokenAssociations
+        // mirror node account
+        const respJSON = await getJsonData(accountIDFromConsensusNode)
+        const acctMaxTokenMirror = respJSON.accounts[0].maxautomatictokenassociations
+        assert.equal(acctMaxTokenConsensus, 10)
+        assert.equal(acctMaxTokenMirror, 10)
+      }
+      catch (err) {
+        console.log(err)
+        console.log(err.status.data)
+      }
     })
     // Create an account with token association over the max
     it('Max token association over the maximum', async function () {
@@ -206,11 +230,10 @@ describe('#createAccount()', function () {
         await JSONRPCRequest('createAccount', {
           publicKey: publicKey,
           initialBalance: 0,
-          maxAutomaticTokenAssociations: 2000,
+          maxAutomaticTokenAssociations: 264,
         })
       } catch (err) {
-        assert.equal(err.data.status, 'INSUFFICIENT_TX_FEE');
-        return
+        assert.equal(err.data.status, 'REQUESTED_NUM_AUTOMATIC_ASSOCIATIONS_EXCEEDS_ASSOCIATION_LIMIT');
       }
       assert.fail("Should throw an error")
     })
@@ -222,8 +245,21 @@ describe('#createAccount()', function () {
         maxAutomaticTokenAssociations: -1,
       })
       let newAccountId = response.accountId
-      let accInf = await getAccountInfo(newAccountId)
-      assert.equal(accInf.maxAutomaticTokenAssociations, -1)
+      try{
+        // consensus node account
+        const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
+        const acctMaxTokenConsensus = accountInfoFromConsensusNode.maxAutomaticTokenAssociations
+        // mirror node account
+        const respJSON = await getJsonData(accountIDFromConsensusNode)
+        const acctMaxTokenMirror = respJSON.accounts[0].maxautomatictokenassociations
+        assert.equal(acctMaxTokenConsensus, -1)
+        assert.equal(acctMaxTokenMirror, -1)
+        assert.equal(accInf.maxAutomaticTokenAssociations, -1)
+      }
+      catch (err) {
+        console.log(err)
+        console.log(err.status.data)
+      }
     })
   })
   //----------- Staked ID - ID of the account to which is staking --------------------
