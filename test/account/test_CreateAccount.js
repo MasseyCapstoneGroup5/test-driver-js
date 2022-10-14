@@ -437,7 +437,6 @@ describe('#createAccount()', function () {
       }
       assert.fail("Should throw an error")
     })
-    })
      //----------- Set auto renew periods -----------
      describe("Create account with specific auto renew period", async function () {
 
@@ -464,7 +463,9 @@ describe('#createAccount()', function () {
       console.log(e)
     }
     
+    })
    })
+  })
   
   return Promise.resolve()
 })
