@@ -1,8 +1,4 @@
-import {AccountBalanceQuery, AccountId, AccountInfoQuery, Client, TokenCreateTransaction} from "@hashgraph/sdk";
-
-export async function getBalance(accountID) {
-    return executeAccountMethod(accountID, new AccountBalanceQuery());
-}
+import {AccountId, AccountInfoQuery, Client, TokenCreateTransaction} from "@hashgraph/sdk";
 
 export async function getAccountInfo(accountID) {
     return executeAccountMethod(accountID, new AccountInfoQuery());
