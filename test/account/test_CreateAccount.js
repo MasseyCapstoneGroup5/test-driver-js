@@ -437,7 +437,34 @@ describe('#createAccount()', function () {
       }
       assert.fail("Should throw an error")
     })
-  })
+    })
+     //----------- Set auto renew periods -----------
+     describe("Create account with specific auto renew period", async function () {
+
+    // Create an account and set auto renew period to 2,592,000 seconds
+    it("should set account auto renew period to 2,592,000 seconds", async function () {
+      try{
+      const response = await JSONRPCRequest('createAccount', {
+        publicKey: publicKey,
+        autoRenewPeriod: BigInt(2592000).toString(),
+      })
+      let newAccountId = response.accountId
+      // consensus node account
+      const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
+      const autoRenewConsensus = accountInfoFromConsensusNode.autoRenewPeriod
+      // mirror node account
+      //const respJSON = await getJsonData(accountIDFromConsensusNode)
+      //const autoRenewMirror = respJSON.accounts[0].autoRenewPeriod
+
+      assert.equal(autoRenewConsensus.seconds.toString(), BigInt(2592000).toString())
+      //assert.equal(autoRenewMirror, BigInt(2592000))
+      //assert.equal(accInf.autoRenewPeriod, BigInt(2592000))
+    }
+    catch (e) {
+      console.log(e)
+    }
+    
+   })
   
   return Promise.resolve()
 })
