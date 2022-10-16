@@ -8,7 +8,7 @@ For account creation, the createAccount method handles setting all the required 
 
 AccountCreateTransaction() parameters:
 
-```json
+```javascipt
 * @param publicKey required
 * @param initialBalance optional
 * @param receiverSignatureRequired optional
@@ -17,6 +17,7 @@ AccountCreateTransaction() parameters:
 * @param stakedNodeId optional
 * @param declineStakingReward optional
 * @param accountMemo optional
+* @param autoRenewPeriod optional
 * @param privateKey optional (used for signing)
 ```
 
@@ -89,13 +90,14 @@ Calls for create account. The JSON-RPC server returns a string representation of
   - [stakedNodeId](#stakednodeid)
   - [declineStakingReward](#declinestakingreward)
   - [accountMemo](#accountmemo)
+  - [autoRenewPeriod](#autorenewperiod)
 
 params
 
 | Name                                 | Type    | Description                                                                     |          |
 | ------------------------------------ | ------- | ------------------------------------------------------------------------------- | -------- |
-| params                               | object  |                                                                                 | Required |
-| params.publicKey                     | string  | The accounts public key                                                         | Optional |
+| params                               | object  |                                                                                 |          |
+| params.publicKey                     | string  | The accounts public key                                                         | Required |
 | params.initialBalance                | number  | Initial balance for the new account                                             | Optional |
 | params.receiverSignatureRequired     | boolean | True/false if the receiver signature is required                                | Optional |
 | params.maxAutomaticTokenAssociations | number  | Max token associations of the account                                           | Optional |
@@ -618,6 +620,58 @@ Error
     "data": {
       "status": "MEMO_TOO_LONG",
       "message": "transaction 0.0.47762334@1665624763.603280522 failed precheck with status MEMO_TOO_LONG"
+    }
+  }
+}
+```
+
+---
+
+### autoRenewPeriod
+
+This parameter sets the autoRenewPeriod property when creating an account.
+
+**Example:**
+
+Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 649,
+  "method": "createAccount",
+  "params": {
+    "publicKey": "302a300506032b6570032100eb42aa1eabdb60bfd1d6ac3c9f226f0ff7d5a53335f67a851e446e015290f213",
+    "autoRenewPeriod": "2592000"
+  }
+}
+```
+
+Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 649,
+  "result": {
+    "accountId": "0.0.48628115",
+    "status": "SUCCESS"
+  }
+}
+```
+
+Error
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 649,
+  "error": {
+    "code": -32001,
+    "message": "Hedera Error",
+    "data": {
+      "status": "AUTORENEW_DURATION_NOT_IN_RANGE",
+      "message": "transaction 0.0.47762334@1665882197.620188556 failed precheck with status AUTORENEW_DURATION_NOT_IN_RANGE"
     }
   }
 }
