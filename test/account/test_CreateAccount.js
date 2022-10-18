@@ -15,6 +15,13 @@ import {
   createAccountMemo,
   getNodeType
 } from '../../generateNewAccount.js'
+import {
+  Client,
+  PrivateKey,
+  Hbar,
+  AccountId,
+  TransferTransaction,
+} from "@hashgraph/sdk";
 import crypto from 'crypto'
 import { assert, expect } from 'chai'
 
@@ -35,6 +42,40 @@ describe('#createAccount()', function () {
   })
   afterEach(async function () {
     await JSONRPCRequest('reset')
+  })
+
+  //----------- Set account alias -----------
+  describe("Create account with alias", async function () {
+
+    // Create an account via an alias account
+    it("should create an account via an alias account", async function () {
+
+      let client = Client.forTestnet().setOperator(
+          AccountId.fromString(process.env.OPERATOR_ACCOUNT_ID),
+          PrivateKey.fromString(process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
+      )
+      const privateKey = PrivateKey.generateECDSA()
+      const publicKey = privateKey.publicKey;
+
+      // Assuming that the target shard and realm are known.
+      // For now they are virtually always 0 and 0.
+      const aliasAccountId = publicKey.toAccountId(0, 0)
+      /*
+      * Note that no queries or transactions have taken place yet.
+      * This account "creation" process is entirely local.
+      */
+        const response = await new TransferTransaction()
+        .addHbarTransfer(process.env.OPERATOR_ACCOUNT_ID, new Hbar(10).negated())
+        .addHbarTransfer(aliasAccountId, new Hbar(10))
+        .execute(client);
+
+        let receipt =  await response.getReceipt(client);
+        // query account via consensus node to verify creation
+      const accountInfoFromConsensusNode = await getAccountInfo(aliasAccountId)
+
+      console.log(`The aliased account ID: 0.0.${accountInfoFromConsensusNode.aliasKey.toString()}`);
+
+    })
   })
 
   //----------- Key is needed to sign each transfer -----------
@@ -436,7 +477,8 @@ describe('#createAccount()', function () {
           return
       }
       assert.fail("Should throw an error")
-    })
+    })    
+
      //----------- Set auto renew periods -----------
    describe("Create account with specific auto renew period", async function () {
 
