@@ -4,7 +4,6 @@ import { getJsonData } from '../../mirrorNodeEnquiry.js'
 import {
   createAccountAsFundingAccount,
   createAliasAccount,
-  getAliasBal,
   createTestAccount,
   createAccountReceiverSignature,
   createTestAccountNoKey,
@@ -43,22 +42,25 @@ describe('#createAccount()', function () {
 ///----------- Set account alias -----------
 describe("Create account with alias", async function () {
   // Create an account by using an alias
-  it("should create an account using an 'alias'", async function () {  
-    const getAliasID = PrivateKey.generateED25519().publicKey.toAccountId(0, 0) 
-    const aliasIdStr = JSON.stringify(getAliasID.toString())
-    /*
-    * Note that no queries or transactions have taken place yet.
-    * This account "creation" process is entirely local.
-    */  
-    await createAliasAccount(process.env.OPERATOR_ACCOUNT_ID, aliasIdStr)
-    const accountInfoFromConsensusNode = await getAccountInfo(getAliasID)
+  it("should create an account using an 'alias'", async function () { 
+    const initialBalance = 1
+    const aliasID = PrivateKey.generateED25519().publicKey.toAccountId(0, 0) 
+    const aliasIdStr = JSON.stringify(aliasID.toString())
+    // initiate request for JSON-RPC server to transfer into alias account to initiate account creation
+    await createAliasAccount(process.env.OPERATOR_ACCOUNT_ID, aliasIdStr, initialBalance)
+
+    // query account via consensus node to verify creation
+    const accountInfoFromConsensusNode = await getAccountInfo(aliasID)
+    const accountIDFromConsensusNode = accountInfoFromConsensusNode.accountId.toString()
+
+      // query account via mirror node to confirm availability after creation
+      const accountInfoFromMirrorNode = await getJsonData(accountIDFromConsensusNode)
+      const accountMemoFromMirrorNode = accountInfoFromMirrorNode.accounts[0].memo
     
-    expect('auto-created account').to.equal(accountInfoFromConsensusNode.accountMemo)   
-    // another possible test, however it requires HBar to be converted into an int ???
-    let aliasAccountBalance = await getAliasBal(process.env.OPERATOR_ACCOUNT_ID, aliasIdStr)
+    expect('auto-created account').to.equal(accountInfoFromConsensusNode.accountMemo) 
+    expect('auto-created account').to.equal(accountMemoFromMirrorNode)     
   })
 })
-
   //----------- Key is needed to sign each transfer -----------
   describe('Key signature for each transfer', function () {
     // Create a new account
