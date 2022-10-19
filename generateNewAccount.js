@@ -12,12 +12,21 @@ export async function generateAccountKeys() {
   }
 }
 
-export async function createAliasAccount(operator_id, privateKey) {
+export async function createAliasAccount(operator_id, aliasAccountId) {
   // CreateAccount with the JSON-RPC, initial balance defaults to 10,000,000,000 tinybars (100Hbar) 
 
   const response = await JSONRPCRequest('createAccountFromAlias', {
     operator_id: operator_id,
-    privateKey: privateKey
+    aliasAccountId: aliasAccountId
+  })
+  return response
+}
+
+export async function getAliasBal(aliasAccountId) {
+  // CreateAccount with the JSON-RPC, initial balance defaults to 10,000,000,000 tinybars (100Hbar) 
+
+  const response = await JSONRPCRequest('getAliasBalance', {
+    aliasAccountId: aliasAccountId
   })
   return response
 }

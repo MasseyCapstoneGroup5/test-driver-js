@@ -4,6 +4,7 @@ import { getJsonData } from '../../mirrorNodeEnquiry.js'
 import {
   createAccountAsFundingAccount,
   createAliasAccount,
+  getAliasBal,
   createTestAccount,
   createAccountReceiverSignature,
   createTestAccountNoKey,
@@ -39,21 +40,22 @@ describe('#createAccount()', function () {
     await JSONRPCRequest('reset')
   })
 
-//----------- Set account alias -----------
+///----------- Set account alias -----------
 describe("Create account with alias", async function () {
   // Create an account by using an alias
-  it("should create an account using an 'alias'", async function () {    
-    const privateKey = PrivateKey.generateECDSA()
-    const privateKeyStr = privateKey.toString()
-    const privateKeyJson =  JSON.stringify(privateKeyStr)
-    const public_Key = privateKey.publicKey
+  it("should create an account using an 'alias'", async function () {  
+    const getAliasID = PrivateKey.generateED25519().publicKey.toAccountId(0, 0) 
+    const aliasIdStr = JSON.stringify(getAliasID.toString())
+    /*
+    * Note that no queries or transactions have taken place yet.
+    * This account "creation" process is entirely local.
+    */  
+    await createAliasAccount(process.env.OPERATOR_ACCOUNT_ID, aliasIdStr)
+    const accountInfoFromConsensusNode = await getAccountInfo(getAliasID)
     
-    const aliasAccountId = public_Key.toAccountId(0, 0)
-    
-    await createAliasAccount(process.env.OPERATOR_ACCOUNT_ID, privateKeyJson)
-    const accountInfoFromConsensusNode = await getAccountInfo(aliasAccountId)
-
-    expect(public_Key.toString()).to.equal(accountInfoFromConsensusNode.aliasKey.toString())   
+    expect('auto-created account').to.equal(accountInfoFromConsensusNode.accountMemo)   
+    // another possible test, however it requires HBar to be converted into an int ???
+    let aliasAccountBalance = await getAliasBal(process.env.OPERATOR_ACCOUNT_ID, aliasIdStr)
   })
 })
 
