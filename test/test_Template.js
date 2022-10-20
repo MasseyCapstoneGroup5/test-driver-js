@@ -24,15 +24,17 @@ describe.skip('Hedera functionality we want to test', function () { // a suite o
     });
     afterEach(function () {
     });
-    
-    
+
+
     describe('Test section name here', function () {
         it('should do something successfully', async function () {
             // 1. Call JSON-RPC (Make sure it is running first)
-            let receipt = await JSONRPCRequest("doSomething", {
+            let response = await JSONRPCRequest("doSomething", {
                 "parameter": "value"
             })
-            let accountId = new AccountId(receipt.accountId).toString()
+            if (response.status === 'NOT_IMPLEMENTED') this.skip()
+
+            let accountId = new AccountId(response.accountId).toString()
 
 
             // Get value using Client SDK (Don't use JSON-RPC)
@@ -42,8 +44,8 @@ describe.skip('Hedera functionality we want to test', function () { // a suite o
             // Get value using Mirror node (optional)
             // add delay here to give mirror node time to update
             let url = `${process.env.MIRROR_NODE_REST_URL}/api/v1/accounts?account.id=${accountId}`;
-            const response = await fetch(url);
-            const respJSON = await response.json();
+            const fetchedResponse = await fetch(url);
+            const respJSON = await fetchedResponse.json();
 
 
             // Check if something was successfully completed
@@ -55,9 +57,11 @@ describe.skip('Hedera functionality we want to test', function () { // a suite o
         it('should try to do something but fail and check error code', async function () {
             try {
                 // 1. Call JSON-RPC (Make sure it is running first)
-                await JSONRPCRequest("doSomethingExpectingError", {
+                let response = await JSONRPCRequest("doSomethingExpectingError", {
                     "parameter": "value"
                 })
+                if (response.status === 'NOT_IMPLEMENTED') this.skip()
+
             } catch (err) {
                 // check if correct error status is thrown
                 // custom hedera errors codes can be found here:

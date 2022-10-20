@@ -39,6 +39,10 @@ export async function JSONRPCRequest(method, params) {
 
     let jsonRPCResponse = await JSONRPClient.requestAdvanced(jsonRPCRequest);
     if (jsonRPCResponse.error) {
+        if (jsonRPCResponse.error.code === -32601){
+            console.warn("Method", method, "not found.")
+            return {status: "NOT_IMPLEMENTED"}; // The json-rpc hasn't implemented the method
+        }
         throw {name: "Error", ...jsonRPCResponse.error}
     } else {
         return jsonRPCResponse.result
