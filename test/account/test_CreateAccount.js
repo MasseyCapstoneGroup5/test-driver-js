@@ -42,7 +42,7 @@ describe('#createAccount()', function () {
   //----------- Key is needed to sign each transfer -----------
   describe('Key signature for each transfer', function () {
     // Create a new account
-    it('Creates an account', async function () {
+    it('Creates an account with a public key', async function () {
       // initiate request for JSON-RPC server to create a new account
       const newAccountId = await createTestAccount(publicKey)
       // query account via consensus node to verify creation
@@ -139,7 +139,7 @@ describe('#createAccount()', function () {
   //-----------  Account key signs transactions depositing into account -----------
   // Require a receiving signature when creating account transaction
   describe('Account key signatures to deposit into account', function () {
-    it('Creates account transaction with Receiver signature required', async function () {
+    it('Creates account that always requires Receiver signature', async function () {
         // Creates new account that always requires transactions to have receiving signature
         const receiverSignatureRequired = true
         const initialBalance = 1
@@ -167,7 +167,7 @@ describe('#createAccount()', function () {
         expect(Boolean(recvdSignatureStatusFromMirrorNode)).to.equal(true)
     })
     // Creates new account that doesn't require transactions to have receiving signature 
-    it('Creates new account transaction without Receiver signature required', async function () {
+    it('Creates account without receiver signature required', async function () {
     // Creates new account that always requires transactions to have receiving signature
        const receiverSignatureRequired = false
        const initialBalance = 1
@@ -257,7 +257,7 @@ describe('#createAccount()', function () {
     })
   })
   //----------- Staked ID - ID of the account to which is staking --------------------
-  describe('Staked ID, ID of account to which is staking', async function () {
+  describe('Staked ID, ID of account or node to which is staking', async function () {
     // Create an account and set staked account ID to operator account ID
     it('Creates an account and sets staked account ID to operator account ID', async function () {
       const newAccountId = await createAccountStakedId(
