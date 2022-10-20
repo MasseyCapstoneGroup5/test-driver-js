@@ -12,8 +12,17 @@ export async function generateAccountKeys() {
   }
 }
 
+export async function createTestAccount(publicKey, initialBal = 10000000000) {
+  // CreateAccount with the JSON-RPC, initial balance defaults to 10,000,000,000 tinybars (100 Hbar) 
+  const response = await JSONRPCRequest('createAccount', {
+    publicKey: publicKey,
+    initialBalance: initialBal,
+  })
+  return response.accountId
+}
+
 export async function createAliasAccount(operator_id, aliasAccountId, initialBalance) {
-  // CreateAccount with the JSON-RPC, initial balance defaults to 10,000,000,000 tinybars (100Hbar) 
+  // Create alias account with the JSON-RPC 
   const response = await JSONRPCRequest('createAccountFromAlias', {
     operator_id: operator_id,
     aliasAccountId: aliasAccountId,
@@ -22,16 +31,8 @@ export async function createAliasAccount(operator_id, aliasAccountId, initialBal
   return response
 }
 
-export async function createTestAccount(publicKey, initialBal = 10000000000) {
-  // CreateAccount with the JSON-RPC, initial balance defaults to 10,000,000,000 tinybars (100Hbar) 
-  const response = await JSONRPCRequest('createAccount', {
-    publicKey: publicKey,
-    initialBalance: initialBal,
-  })
-  return response.accountId
-}
-
-export async function createAccountReceiverSignature(publicKey, privateKey, initialBalance, isRequired){
+export async function createAccountReceiverSignature(publicKey, privateKey, initialBalance, isRequired) {
+  // Create account with the JSON-RPC that requires owing account to sign for deposits into it
   const response = await JSONRPCRequest('createAccount', {
     publicKey: publicKey,
     privateKey: privateKey,
@@ -42,12 +43,12 @@ export async function createAccountReceiverSignature(publicKey, privateKey, init
 }
 
 export async function createTestAccountNoKey() {
-  // CreateAccount with the JSON-RPC
+  // Try to create account with the JSON-RPC without providing a PublicKey
   return await JSONRPCRequest('createAccount', {})
 }
 
 export async function createAccountStakedId(publicKey, stakedAccountId) {
-  // CreateAccount with the JSON-RPC
+  // Create account with the JSON-RPC that includes a staked account Id
   const response = await JSONRPCRequest('createAccount', {
     publicKey: publicKey,
     stakedAccountId: stakedAccountId,
@@ -56,7 +57,7 @@ export async function createAccountStakedId(publicKey, stakedAccountId) {
 }
 
 export async function createAccountStakedNodeId(publicKey, stakedNodeId) {
-  // CreateAccount with the JSON-RPC
+  // Create account with the JSON-RPC that includes a staked node Id
   const response = await JSONRPCRequest('createAccount', {
     publicKey: publicKey,
     stakedNodeId: stakedNodeId,
@@ -65,11 +66,11 @@ export async function createAccountStakedNodeId(publicKey, stakedNodeId) {
 }
 
 export async function createAccountWithStakedAccountAndNodeIds(
+  // Create account with the JSON-RPC that includes both a staked account Id and staked node Id
   publicKey,
   stakedAccountId,
   stakedNodeId
 ) {
-  // CreateAccount with the JSON-RPC
   const response = await JSONRPCRequest('createAccount', {
     publicKey: publicKey,
     stakedAccountId: stakedAccountId,
@@ -102,7 +103,7 @@ export async function createAccountAsFundingAccount(initialBalance) {
 }
 
 export async function createAccountDeclineRewards(publicKey, condition) {
-  // CreateAccount with the JSON-RPC
+  // Create acount with the JSON-RPC that declines rewards for staking
   const response = await JSONRPCRequest('createAccount', {
     publicKey: publicKey,
     declineStakingReward: condition,
@@ -111,7 +112,7 @@ export async function createAccountDeclineRewards(publicKey, condition) {
 }
 
 export async function createAccountMemo(publicKey, memo) {
-  // CreateAccount with the JSON-RPC
+  // Create account with the JSON-RPC that includes a memo in the memo field
   const response = await JSONRPCRequest('createAccount', {
     publicKey: publicKey,
     accountMemo: memo,
@@ -121,10 +122,9 @@ export async function createAccountMemo(publicKey, memo) {
 
 export async function getNodeType(useNode) {
   // check if tests are running or local node or testnet
-  if(useNode=='local') {
-    return true
-  } else if(useNode=='testnet') {
-    return false
+  if(useNode=='local') return true
+  else if(useNode=='testnet') return false
+  else { 
+    console.warn("Uncaught Node Type Error: the argument is not a node") 
   }
-  else { return null } 
 }

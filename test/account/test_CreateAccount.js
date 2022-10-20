@@ -16,7 +16,7 @@ import {
   createAccountMemo,
   getNodeType
 } from '../../generateNewAccount.js'
-import { PrivateKey } from "@hashgraph/sdk";
+import { PrivateKey } from "@hashgraph/sdk"
 import crypto from 'crypto'
 import { assert, expect } from 'chai'
 
@@ -39,28 +39,6 @@ describe('#createAccount()', function () {
     await JSONRPCRequest('reset')
   })
 
-///----------- Set account alias -----------
-describe("Create account with alias", async function () {
-  // Create an account by using an alias
-  it("should create an account using an 'alias'", async function () { 
-    const initialBalance = 1
-    const aliasID = PrivateKey.generateED25519().publicKey.toAccountId(0, 0) 
-    const aliasIdStr = JSON.stringify(aliasID.toString())
-    // initiate request for JSON-RPC server to transfer into alias account to initiate account creation
-    await createAliasAccount(process.env.OPERATOR_ACCOUNT_ID, aliasIdStr, initialBalance)
-
-    // query account via consensus node to verify creation
-    const accountInfoFromConsensusNode = await getAccountInfo(aliasID)
-    const accountIDFromConsensusNode = accountInfoFromConsensusNode.accountId.toString()
-
-      // query account via mirror node to confirm availability after creation
-      const accountInfoFromMirrorNode = await getJsonData(accountIDFromConsensusNode)
-      const accountMemoFromMirrorNode = accountInfoFromMirrorNode.accounts[0].memo
-    
-    expect('auto-created account').to.equal(accountInfoFromConsensusNode.accountMemo) 
-    expect('auto-created account').to.equal(accountMemoFromMirrorNode)     
-  })
-})
   //----------- Key is needed to sign each transfer -----------
   describe('Key signature for each transfer', function () {
     // Create a new account
@@ -98,9 +76,9 @@ describe("Create account with alias", async function () {
     // Create an account with an invalid public key
     it('Creates an account with an invalid public key', async function () {
       try {
-        // generate a random key value of 88 bytes (where 88b is equal to byte length of valid public key)
+        // generate a random key value (where 88b is equal to byte length of valid public key)
         const invalidPublicKey = crypto.randomBytes(88).toString()
-        // request JSON-RPC server to try to create a new account with invalid public key
+        // request JSON-RPC server to create a new account with invalid public key
         await createTestAccount(invalidPublicKey)
       } catch (err) {
         // confirm error thrown for creation attempt with an invalid public key
@@ -122,7 +100,7 @@ describe("Create account with alias", async function () {
         let negativeInitialBalance = initialBalance *= 100000000
         await createTestAccount(publicKey, negativeInitialBalance)
       } catch (err) {
-        // confirm error thrown for creation attempt using a negative initial balance amount
+        // confirm error thrown for using a negative initial balance amount
         assert.equal(
           err.data.status,
           'INVALID_INITIAL_BALANCE',
@@ -137,16 +115,18 @@ describe("Create account with alias", async function () {
        * The payer account has insufficient cryptocurrency to pay the transaction fee
        * INSUFFICIENT_PAYER_BALANCE = 10;
        **/
-      const initialBalance = 500000000
+      // set initial bal to 5 Hbar ( 500000000 Tinybar at ratio 1: 100,000,000 )
+      const initialBalance = 500000000 
+      // set payer (funding account) bal to 5 Hbar + 1 Tinybar ( 500000001 Tinybar ) 
       const payerBalance = 500000001
-      // create a first test account that will be used as the funding account for a second
-      // test account. Allocate an initial balance of 5 HBAr to the funding account
+      // create a first test account that will be used as the funding account for a 
+      // second account. Allocate an initial balance of 5 HBAr to the funding account
       await createAccountAsFundingAccount(initialBalance)
       try {
         await createTestAccount(publicKey, payerBalance)
       } catch (err) {
-        // confirm error thrown for creation attempt where initial balance is more than the
-        // balance held in the funding account balance
+        // confirm error thrown for creation attempt where initial balance is more 
+        // than the balance held in the funding account balance
         assert.equal(
           err.data.status,
           'INSUFFICIENT_PAYER_BALANCE',
@@ -159,42 +139,58 @@ describe("Create account with alias", async function () {
   //-----------  Account key signs transactions depositing into account -----------
   // Require a receiving signature when creating account transaction
   describe('Account key signatures to deposit into account', function () {
-    it('Creates account transaction and returns Receiver signature required to true', async function () {
+    it('Creates account transaction with Receiver signature required', async function () {
         // Creates new account that always requires transactions to have receiving signature
         const receiverSignatureRequired = true
         const initialBalance = 1
-        const newAccountId = await createAccountReceiverSignature(publicKey, privateKey, initialBalance, receiverSignatureRequired)
+        const newAccountId = await createAccountReceiverSignature(
+          publicKey, 
+          privateKey, 
+          initialBalance, 
+          receiverSignatureRequired
+          )
 
         // query account via consensus node to verify creation
         const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
-        const accountIDFromConsensusNode = accountInfoFromConsensusNode.accountId.toString()
-        const recvdSignatureStatusFromConsensusNode = accountInfoFromConsensusNode.isReceiverSignatureRequired
+        const accountIDFromConsensusNode = 
+          accountInfoFromConsensusNode.accountId.toString()
+        const recvdSignatureStatusFromConsensusNode = 
+          accountInfoFromConsensusNode.isReceiverSignatureRequired
   
         // query account via mirror node to confirm availability after creation
         const respJSON = await getJsonData(accountIDFromConsensusNode)
-        const recvdSignatureStatusFromMirrorNode = respJSON.accounts[0].receiver_sig_required
+        const recvdSignatureStatusFromMirrorNode = 
+          respJSON.accounts[0].receiver_sig_required
   
-        // confirm pass status with testing for account creation with requirement for signature set to true
+        // confirm pass status for account creation with signature required
         expect(Boolean(recvdSignatureStatusFromConsensusNode)).to.equal(true)
         expect(Boolean(recvdSignatureStatusFromMirrorNode)).to.equal(true)
     })
-    // Creates new account that doesn't require all transactions to have receiving signature 
+    // Creates new account that doesn't require transactions to have receiving signature 
     it('Creates new account transaction without Receiver signature required', async function () {
     // Creates new account that always requires transactions to have receiving signature
        const receiverSignatureRequired = false
        const initialBalance = 1
-       const newAccountId = await createAccountReceiverSignature(publicKey, privateKey, initialBalance, receiverSignatureRequired)
+       const newAccountId = await createAccountReceiverSignature(
+        publicKey,
+        privateKey, 
+        initialBalance, 
+        receiverSignatureRequired
+        )
 
        // query account via consensus node to verify creation
        const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
-       const accountIDFromConsensusNode = accountInfoFromConsensusNode.accountId.toString()
-       const recvdSignatureStatusFromConsensusNode = accountInfoFromConsensusNode.isReceiverSignatureRequired
+       const accountIDFromConsensusNode = 
+         accountInfoFromConsensusNode.accountId.toString()
+       const recvdSignatureStatusFromConsensusNode = 
+         accountInfoFromConsensusNode.isReceiverSignatureRequired
  
        // query account via mirror node to confirm availability after creation
        const respJSON = await getJsonData(accountIDFromConsensusNode)
-       const recvdSignatureStatusFromMirrorNode = respJSON.accounts[0].receiver_sig_required
+       const recvdSignatureStatusFromMirrorNode = 
+         respJSON.accounts[0].receiver_sig_required
  
-       // confirm pass status with testing for account creation with requirement for signature set to true
+       // confirm pass for account creation with requirement for signature set to true
        expect(Boolean(recvdSignatureStatusFromConsensusNode)).to.equal(false)
        expect(Boolean(recvdSignatureStatusFromMirrorNode)).to.equal(false)
     })
@@ -202,7 +198,7 @@ describe("Create account with alias", async function () {
   //----------- Maximum number of tokens that an Account be associated with -----------
   describe('Max Token Association', function () {
     // Creates an account with a default max token association
-    //The accounts maxAutomaticTokenAssociations can be queried on the consensus node with AccountInfoQuery
+    // maxAutomaticTokenAssociations can be queried via consensus node with AccountInfoQuery
     it('Default max token association', async function () {
       const response = await JSONRPCRequest('createAccount', {
         publicKey: publicKey,
@@ -212,7 +208,8 @@ describe("Create account with alias", async function () {
       const newAccountId = response.accountId
       // consensus node account
       const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
-      const acctMaxTokenConsensus = accountInfoFromConsensusNode.maxAutomaticTokenAssociations.low
+      const acctMaxTokenConsensus = 
+        accountInfoFromConsensusNode.maxAutomaticTokenAssociations.low
 
       assert.equal(acctMaxTokenConsensus, 0)
     })
@@ -226,7 +223,8 @@ describe("Create account with alias", async function () {
       const newAccountId = response.accountId
       // consensus node account
       const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
-      const acctMaxTokenConsensus = accountInfoFromConsensusNode.maxAutomaticTokenAssociations.low
+      const acctMaxTokenConsensus = 
+        accountInfoFromConsensusNode.maxAutomaticTokenAssociations.low
 
       assert.equal(acctMaxTokenConsensus, 10)
     })
@@ -252,7 +250,8 @@ describe("Create account with alias", async function () {
       const newAccountId = response.accountId
       // consensus node account
       const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
-      const acctMaxTokenConsensus = accountInfoFromConsensusNode.maxAutomaticTokenAssociations.low
+      const acctMaxTokenConsensus = 
+        accountInfoFromConsensusNode.maxAutomaticTokenAssociations.low
 
       assert.equal(acctMaxTokenConsensus, -1)
     })
@@ -276,7 +275,7 @@ describe("Create account with alias", async function () {
       const respJSON = await getJsonData(accountID)
       const stakedIDFromMirrorNode = respJSON.accounts[0].staked_account_id
 
-      // confirm pass status with testing for account creation with a set staked account ID
+      // confirm pass for account creation with a set staked account ID
       expect(stakedIDFromConsensusNode).to.equal(
         process.env.OPERATOR_ACCOUNT_ID
       )
@@ -303,7 +302,7 @@ describe("Create account with alias", async function () {
           const respJSON = await getJsonData(accountID)
           const stakedNodeIDFromMirrorNode = respJSON.accounts[0].staked_node_id
 
-          // confirm pass status with testing for account creation with a set staked node ID
+          // confirm pass for account creation with a set staked node ID
           expect(Number(stakedNodeIDFromConsensusNode)).to.equal(randomNodeId)
           expect(Number(stakedNodeIDFromMirrorNode)).to.equal(randomNodeId)
         }
@@ -345,7 +344,7 @@ describe("Create account with alias", async function () {
         // select a staked node id greater than 6 for the test
         const noInputStakedId = ''
         await createAccountStakedId(publicKey, noInputStakedId)
-        // confirm error thrown for creation attempt with no input provided for staked account ID
+        // confirm error thrown for create with no input for staked account ID
       } catch (err) {
         return
       }
@@ -361,7 +360,7 @@ describe("Create account with alias", async function () {
         // select a staked node id betwen 0 and 6 for the test
         const stakedNodeId = Math.floor(Math.random() * 6) + 1
 
-        // initiate request for JSON-RPC server to create a new account with both StakedAccountId and StakedNodeId
+        // request JSON-RPC create account with both StakedAccountId and StakedNodeId
         const newAccountId = await createAccountWithStakedAccountAndNodeIds(
           publicKey,
           stakedAccountId,
@@ -380,8 +379,8 @@ describe("Create account with alias", async function () {
         const stakedAccountIDFromMirrorNode = respJSON.accounts[0].staked_account_id
         const stakedNodeIDFromMirrorNode = respJSON.accounts[0].staked_node_id
 
-        // confirm pass status with testing for account creation with staked node id set to random between 0 and 6,
-        // note: Hedera network does not permit setting of both, so will reject staked account id
+        // confirm pass for account creation with staked node id set to random between 0 and 6,
+        // note: Hedera network does not permit setting of both, so will set staked account id
         // to a null value
         expect(stakedAccountIDFromConsensusNode).to.equal(null)
         expect(stakedAccountIDFromMirrorNode).to.equal(null)
@@ -432,7 +431,6 @@ describe("Create account with alias", async function () {
       assert.fail("Should throw an error")
     })
   })
-
   describe('Create accounts with a memo', async function () {
     // Create an account with a memo
     it('Creates an account with a memo', async function () {
@@ -461,9 +459,8 @@ describe("Create account with alias", async function () {
       }
       assert.fail("Should throw an error")
     })
-     //----------- Set auto renew periods -----------
-   describe("Create account with specific auto renew period", async function () {
-
+    //----------- Set auto renew periods -----------
+    describe("Create account with specific auto renew period", async function () {
     // Create an account and set auto renew period to 2,592,000 seconds
     it("should set account auto renew period to 2,592,000 seconds", async function () {
       const response = await JSONRPCRequest('createAccount', {
@@ -508,8 +505,43 @@ describe("Create account with alias", async function () {
         assert.equal(e.data.status, 'AUTORENEW_DURATION_NOT_IN_RANGE')
         }
     })
-
    })
+  })  
+  ///----------- Set account alias -----------
+  describe("Create account with alias", async function () {
+    // Create an account by using an alias
+    it("should create an account using an 'alias'", async function () { 
+      // set initial balance to 100 Hbar
+      const initialBalance = 100
+      // create public/private key pair then generate alias consisting of <shard>.<realm>.<bytes>
+      const aliasPublicKey = PrivateKey.generateED25519().publicKey
+      const aliasID = aliasPublicKey.toAccountId(0, 0) 
+      const aliasIdStr = JSON.stringify(aliasID.toString())
+
+      // initiate request for JSON-RPC server to transfer into alias account to initiate account creation
+      await createAliasAccount(
+        process.env.OPERATOR_ACCOUNT_ID,
+        aliasIdStr, 
+        initialBalance
+        )
+
+      // query account via consensus node to verify creation
+      const accountInfoFromConsensusNode = await getAccountInfo(aliasID)
+      const accountIDFromConsensusNode = 
+        accountInfoFromConsensusNode.accountId.toString()
+
+      // query account via mirror node to confirm availability after creation
+      const accountInfoFromMirrorNode = await getJsonData(accountIDFromConsensusNode)
+      const accountAliasFromMirrorNode = 
+        accountInfoFromMirrorNode.accounts[0].alias
+      const accountMemoFromMirrorNode = 
+        accountInfoFromMirrorNode.accounts[0].memo
+
+      expect(accountInfoFromConsensusNode.aliasKey.toString()).to.equal(aliasPublicKey.toString()) 
+      expect(accountInfoFromConsensusNode.accountMemo).to.equal('auto-created account') 
+      expect(accountAliasFromMirrorNode).to.not.be.null
+      expect(accountMemoFromMirrorNode).to.equal('auto-created account')             
+    })
   })
   
   return Promise.resolve()
