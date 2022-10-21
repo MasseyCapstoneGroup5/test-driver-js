@@ -3,7 +3,7 @@ import {PublicKey } from "@hashgraph/sdk";
 import {getAccountInfo} from "../../SDKEnquiry.js";
 import {updateAccountKey} from "../../generateUpdates.js";
 import {expect, assert} from "chai";
-import {setFundingAccount} from "../../generateNewAccount.js";
+import {setOperator} from "../../setup_Tests.js";
 
 let accountId;
 let firstPvtKey, firstPublicKey;    // generate first pair of keys for new account
@@ -17,7 +17,7 @@ let randomPvtKey, randomPublicKey;  // a random pair to test authorisation failu
     this.timeout(10000); 
 
     before(async function () {
-        await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
+        await setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
     });
     after(async function () {
         await JSONRPCRequest("reset")
@@ -52,6 +52,7 @@ let randomPvtKey, randomPublicKey;  // a random pair to test authorisation failu
         let response = await JSONRPCRequest("createAccount", {
             "publicKey": firstPublicKey
         })
+        if(response.status == "NOT_IMPLEMENTED") this.skip()
         accountId = response.accountId;
     });    
 

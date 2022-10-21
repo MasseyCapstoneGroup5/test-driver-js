@@ -2,7 +2,7 @@ import {JSONRPCRequest} from "../../client.js";
 import {AccountId, Query, AccountInfoQuery} from "@hashgraph/sdk";
 import {getBalance} from "../../SDKEnquiry.js";
 import {expect} from "chai";
-import {setFundingAccount} from "../../generateNewAccount.js";
+import {setOperator} from "../../setup_Tests.js";
 
 let newAccountId;
 let newPrivateKey;
@@ -15,7 +15,7 @@ describe('#getAccountInfoTests', function () { // a suite of tests
 
     // before and after hooks (normally used to set up and reset the client SDK)
     before(async function () {
-        await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
+        await setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
     });
     after(async function () {
         await JSONRPCRequest("reset")
@@ -41,6 +41,7 @@ describe('#getAccountInfoTests', function () { // a suite of tests
                 "publicKey": newPublicKey,
                 "initialBalance": 1000
             });
+            if(response.status == "NOT_IMPLEMENTED") this.skip()
             newAccountId = response.accountId
 
             // Check if account has been created and has 1000 tinyBar using the JS SDK Client

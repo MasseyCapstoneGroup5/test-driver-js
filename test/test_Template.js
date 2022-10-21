@@ -2,7 +2,7 @@ import {JSONRPCRequest} from "../client.js";
 import {AccountId} from "@hashgraph/sdk";
 import fetch from "node-fetch";
 import {getAccountInfo} from "../SDKEnquiry.js";
-import {setFundingAccount} from "../generateNewAccount.js";
+import {setOperator} from "../setup_Tests.js";
 import {assert} from "chai";
 
 /**
@@ -13,7 +13,7 @@ describe.skip('Hedera functionality we want to test', function () { // a suite o
 
     // before and after hooks (normally used to set up and reset the client SDK)
     before(async function () {
-        await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
+        await setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
     });
     after(async function () {
         await JSONRPCRequest("reset")

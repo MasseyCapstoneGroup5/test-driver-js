@@ -1,7 +1,7 @@
 import {JSONRPCRequest} from "../../client.js";
 import {getAccountInfo, getBalance} from "../../SDKEnquiry.js";
 import {assert} from "chai";
-import {setFundingAccount} from "../../generateNewAccount.js";
+import {setOperator} from "../../setup_Tests.js";
 import {
     Client,
     PrivateKey,
@@ -28,40 +28,11 @@ let recipientFinalBal;
     this.timeout(10000);
 
     before(async function generateAccountId() {
-        await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
+        await setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
     });
     after(async function () {
         await JSONRPCRequest("reset")
     });
-
-    // Create an account via an alias account
-    it("should create an account via an alias account", async function () {
-
-        let client = Client.forTestnet().setOperator(
-            AccountId.fromString(process.env.OPERATOR_ACCOUNT_ID),
-            PrivateKey.fromString(process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
-        )
-        const privateKey = PrivateKey.generateECDSA()
-        const publicKey = privateKey.publicKey;
-  
-        // Assuming that the target shard and realm are known.
-        // For now they are virtually always 0 and 0.
-        const aliasAccountId = publicKey.toAccountId(0, 0)
-        /*
-        * Note that no queries or transactions have taken place yet.
-        * This account "creation" process is entirely local.
-        */
-          const response = await new TransferTransaction()
-          .addHbarTransfer(process.env.OPERATOR_ACCOUNT_ID, new Hbar(10).negated())
-          .addHbarTransfer(aliasAccountId, new Hbar(10))
-          .execute(client);
-  
-          let receipt =  await response.getReceipt(client)
-          // query account via consensus node to verify creation
-        const accountInfoFromConsensusNode = await getAccountInfo(aliasAccountId)
-        //console.log(`The aliased account ID: 0.0.${info.aliasKey.toString()}`);
-  
-      })
 
     it('should create newAccount via JSON-RPC server', async function () {
         // Generate new private & public key

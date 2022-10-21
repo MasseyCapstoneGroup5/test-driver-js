@@ -2,7 +2,7 @@ import {JSONRPCRequest} from "../../client.js";
 import {getAccountInfo} from "../../SDKEnquiry.js";
 import {updateAccountMemo} from "../../generateUpdates.js";
 import {expect, assert} from "chai";
-import {setFundingAccount} from "../../generateNewAccount.js";
+import {setOperator} from "../../setup_Tests.js";
 
 let newAccountId;
 let newPrivateKey;
@@ -16,7 +16,7 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
 
     // before and after hooks (normally used to set up and reset the client SDK)
     before(async function () {
-        await setFundingAccount(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
+        await setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
     });
     after(async function () {
         await JSONRPCRequest("reset")
@@ -34,6 +34,7 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
         let response = await JSONRPCRequest("createAccount", {
             "publicKey": newPublicKey
         });
+        if(response.status == "NOT_IMPLEMENTED") this.skip()
         newAccountId = response.accountId
     });
 

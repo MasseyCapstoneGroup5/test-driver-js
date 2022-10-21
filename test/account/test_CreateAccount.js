@@ -1,21 +1,11 @@
 import { JSONRPCRequest } from '../../client.js'
 import { getAccountInfo } from '../../SDKEnquiry.js'
 import { getJsonData } from '../../mirrorNodeEnquiry.js'
-import {
-  createAccountAsFundingAccount,
-  createAliasAccount,
-  createTestAccount,
-  createAccountReceiverSignature,
-  createTestAccountNoKey,
-  createAccountStakedId,
-  createAccountStakedNodeId,
-  createAccountWithStakedAccountAndNodeIds,
-  createAccountDeclineRewards,
+import { 
   generateAccountKeys,
-  setFundingAccount,
-  createAccountMemo,
+  setOperator,
   getNodeType
-} from '../../generateNewAccount.js'
+} from "../../setup_Tests.js";
 import { PrivateKey } from "@hashgraph/sdk"
 import crypto from 'crypto'
 import { assert, expect } from 'chai'
@@ -30,7 +20,7 @@ describe('#createAccount()', function () {
   beforeEach(async function () {
     local = await getNodeType(process.env.NODE_TYPE);
     ({ publicKey, privateKey } = await generateAccountKeys());
-    await setFundingAccount(
+    await setOperator(
       process.env.OPERATOR_ACCOUNT_ID,
       process.env.OPERATOR_ACCOUNT_PRIVATE_KEY
     )
@@ -41,10 +31,17 @@ describe('#createAccount()', function () {
 
   //----------- Key is needed to sign each transfer -----------
   describe('Key signature for each transfer', function () {
-    // Create a new account
     it('Creates an account with a public key', async function () {
+      // set initial balance of 10,000,000,000 tinybars (100 Hbar) 
+      const initialBal = 10000000000
       // initiate request for JSON-RPC server to create a new account
-      const newAccountId = await createTestAccount(publicKey)
+      const response = await JSONRPCRequest('createAccount', {
+        publicKey: publicKey,
+        initialBalance: initialBal
+      })
+      if(response.status == "NOT_IMPLEMENTED") this.skip()
+      const newAccountId = response.accountId
+
       // query account via consensus node to verify creation
       const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
       const accountIDFromConsensusNode = accountInfoFromConsensusNode.accountId.toString()
@@ -64,8 +61,11 @@ describe('#createAccount()', function () {
        * KEY_REQUIRED = 26;
        **/
       try {
-        // request JSON-RPC server to try to create a new account without a public key
-        await createTestAccountNoKey()
+        // request JSON-RPC server to create a new account without providing public key
+        // Try to create account with the JSON-RPC without providing a PublicKey
+
+      const response = await JSONRPCRequest('createAccount', {})
+      if(response.status == "NOT_IMPLEMENTED") this.skip()
       } catch (err) {
         // confirm error thrown for creation attempt without provision of public key
         assert.equal(err.data.status, "KEY_REQUIRED");
@@ -78,8 +78,14 @@ describe('#createAccount()', function () {
       try {
         // generate a random key value (where 88b is equal to byte length of valid public key)
         const invalidPublicKey = crypto.randomBytes(88).toString()
+        // set initial balance of 10,000,000,000 tinybars (100 Hbar) 
+        const initialBal = 10000000000
         // request JSON-RPC server to create a new account with invalid public key
-        await createTestAccount(invalidPublicKey)
+        const response = await JSONRPCRequest('createAccount', {
+          publicKey: invalidPublicKey,
+          initialBalance: initialBal
+        })
+        if(response.status == "NOT_IMPLEMENTED") this.skip()
       } catch (err) {
         // confirm error thrown for creation attempt with an invalid public key
         assert.equal(err.code, -32603, 'Internal error');
@@ -98,7 +104,11 @@ describe('#createAccount()', function () {
         let initialBalance = -1
         // convert Hbar to Tinybar at ratio 1: 100,000,000
         let negativeInitialBalance = initialBalance *= 100000000
-        await createTestAccount(publicKey, negativeInitialBalance)
+        const response = await JSONRPCRequest('createAccount', {
+          publicKey: publicKey,
+          initialBalance: negativeInitialBalance
+        })
+        if(response.status == "NOT_IMPLEMENTED") this.skip()
       } catch (err) {
         // confirm error thrown for using a negative initial balance amount
         assert.equal(
@@ -121,9 +131,22 @@ describe('#createAccount()', function () {
       const payerBalance = 500000001
       // create a first test account that will be used as the funding account for a 
       // second account. Allocate an initial balance of 5 HBAr to the funding account
-      await createAccountAsFundingAccount(initialBalance)
+      const response = await JSONRPCRequest('createAccount', {
+        publicKey: publicKey,
+        initialBalance: initialBalance
+      })
+      const firstAccountId = response.accountId
+      // set operator Id temporarily to firstAccountId 
+      await setOperator(firstAccountId, privateKey);
+      
+      // generate fresh keys for second account 
+      ({ publicKey, privateKey } = await generateAccountKeys());
       try {
-        await createTestAccount(publicKey, payerBalance)
+        const response = await JSONRPCRequest('createAccount', {
+          publicKey: publicKey,
+          initialBalance: payerBalance
+        })
+        if(response.status == "NOT_IMPLEMENTED") this.skip()   
       } catch (err) {
         // confirm error thrown for creation attempt where initial balance is more 
         // than the balance held in the funding account balance
@@ -141,15 +164,14 @@ describe('#createAccount()', function () {
   describe('Account key signatures to deposit into account', function () {
     it('Creates account that always requires Receiver signature', async function () {
         // Creates new account that always requires transactions to have receiving signature
-        const receiverSignatureRequired = true
-        const initialBalance = 1
-        const newAccountId = await createAccountReceiverSignature(
-          publicKey, 
-          privateKey, 
-          initialBalance, 
-          receiverSignatureRequired
-          )
-
+        const response = await JSONRPCRequest('createAccount', {
+          publicKey: publicKey,
+          privateKey: privateKey,
+          initialBalance: 1,
+          receiverSignatureRequired: true
+        })
+        if(response.status == "NOT_IMPLEMENTED") this.skip()
+        const newAccountId = response.accountId
         // query account via consensus node to verify creation
         const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
         const accountIDFromConsensusNode = 
@@ -169,14 +191,14 @@ describe('#createAccount()', function () {
     // Creates new account that doesn't require transactions to have receiving signature 
     it('Creates account without receiver signature required', async function () {
     // Creates new account that always requires transactions to have receiving signature
-       const receiverSignatureRequired = false
-       const initialBalance = 1
-       const newAccountId = await createAccountReceiverSignature(
-        publicKey,
-        privateKey, 
-        initialBalance, 
-        receiverSignatureRequired
-        )
+       const response = await JSONRPCRequest('createAccount', {
+        publicKey: publicKey,
+        privateKey: privateKey,
+        initialBalance: 1,
+        receiverSignatureRequired: false
+      })
+      if(response.status == "NOT_IMPLEMENTED") this.skip()
+      const newAccountId = response.accountId
 
        // query account via consensus node to verify creation
        const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
@@ -205,6 +227,7 @@ describe('#createAccount()', function () {
         initialBalance: 0,
         maxAutomaticTokenAssociations: 0,
       })
+      if(response.status == "NOT_IMPLEMENTED") this.skip()
       const newAccountId = response.accountId
       // consensus node account
       const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
@@ -220,6 +243,7 @@ describe('#createAccount()', function () {
         initialBalance: 0,
         maxAutomaticTokenAssociations: 10,
       })
+      if(response.status == "NOT_IMPLEMENTED") this.skip()
       const newAccountId = response.accountId
       // consensus node account
       const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
@@ -247,6 +271,7 @@ describe('#createAccount()', function () {
         initialBalance: 0,
         maxAutomaticTokenAssociations: -1,
       })
+      if(response.status == "NOT_IMPLEMENTED") this.skip()
       const newAccountId = response.accountId
       // consensus node account
       const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
@@ -260,10 +285,13 @@ describe('#createAccount()', function () {
   describe('Staked ID, ID of account or node to which is staking', async function () {
     // Create an account and set staked account ID to operator account ID
     it('Creates an account and sets staked account ID to operator account ID', async function () {
-      const newAccountId = await createAccountStakedId(
-        publicKey,
-        process.env.OPERATOR_ACCOUNT_ID
-      )
+      // Create account with the JSON-RPC that includes a staked account Id
+      const response = await JSONRPCRequest('createAccount', {
+        publicKey: publicKey,
+        stakedAccountId: process.env.OPERATOR_ACCOUNT_ID
+      })
+      if(response.status == "NOT_IMPLEMENTED") this.skip()
+      const newAccountId = response.accountId
 
       // query account via consensus node to verify creation
       const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
@@ -282,15 +310,17 @@ describe('#createAccount()', function () {
       expect(stakedIDFromMirrorNode).to.equal(process.env.OPERATOR_ACCOUNT_ID)
     })
     // Create an account and set staked node ID and a node ID    
-      it('Creates an account and sets staked node ID and a node ID', async function () {
+      it('Creates an account and sets staked node ID to a node ID', async function () {
         if(local) this.skip()
-        else {
+        //else {
           // select a staked node id between 0 and 6 for the test
           const randomNodeId = Math.floor(Math.random() * 6) + 1
-          const newAccountId = await createAccountStakedNodeId(
-            publicKey,
-            randomNodeId
-          )
+          const response = await JSONRPCRequest('createAccount', {
+            publicKey: publicKey,
+            stakedNodeId: randomNodeId
+          })
+          if(response.status == "NOT_IMPLEMENTED") this.skip()
+          const newAccountId = response.accountId
 
           // query account via consensus node to verify creation
           const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
@@ -305,7 +335,7 @@ describe('#createAccount()', function () {
           // confirm pass for account creation with a set staked node ID
           expect(Number(stakedNodeIDFromConsensusNode)).to.equal(randomNodeId)
           expect(Number(stakedNodeIDFromMirrorNode)).to.equal(randomNodeId)
-        }
+        //}
     })
     // Create an account and set the staked account ID to an invalid ID
     it('Creates an account and sets the staked account ID to an invalid ID', async function () {
@@ -315,7 +345,11 @@ describe('#createAccount()', function () {
        **/
       try {
         const invalidStakedId = '9.9.999999'
-        await createAccountStakedId(publicKey, invalidStakedId)
+        const response = await JSONRPCRequest('createAccount', {
+          publicKey: publicKey,
+          stakedAccountId: invalidStakedId
+        })
+        if(response.status == "NOT_IMPLEMENTED") this.skip()
       } catch (err) {
         assert.equal(err.data.status, 'INVALID_STAKING_ID');
         return
@@ -331,7 +365,11 @@ describe('#createAccount()', function () {
       try {
         // select a staked node id greater than 6 for the test
         const invalidNodeId = 10
-        await createAccountStakedNodeId(publicKey, invalidNodeId)
+        const response = await JSONRPCRequest('createAccount', {
+          publicKey: publicKey,
+          stakedNodeId: invalidNodeId
+        })
+        if(response.status == "NOT_IMPLEMENTED") this.skip()
       } catch (err) {
         assert.equal(err.data.status, 'INVALID_STAKING_ID');
         return
@@ -341,60 +379,31 @@ describe('#createAccount()', function () {
     // Create an account and set staked account ID with no input
     it('Creates an account and sets staked account ID with no input', async function () {
       try {
-        // select a staked node id greater than 6 for the test
+        // set a staked node Id with no input
         const noInputStakedId = ''
-        await createAccountStakedId(publicKey, noInputStakedId)
+        const response = await JSONRPCRequest('createAccount', {
+          publicKey: publicKey,
+          stakedNodeId: noInputStakedId
+        })
+        if(response.status == "NOT_IMPLEMENTED") this.skip()
         // confirm error thrown for create with no input for staked account ID
       } catch (err) {
         return
       }
       assert.fail("Should throw an error")
-    })
-    // Create an account and set both a staking account ID and node ID
-    it('Creates an account and sets both a staking account ID and node ID', async function () {
-      if(local) this.skip()
-      else {
-        // set staked account ID to operator account ID
-        const stakedAccountId = process.env.OPERATOR_ACCOUNT_ID
-
-        // select a staked node id betwen 0 and 6 for the test
-        const stakedNodeId = Math.floor(Math.random() * 6) + 1
-
-        // request JSON-RPC create account with both StakedAccountId and StakedNodeId
-        const newAccountId = await createAccountWithStakedAccountAndNodeIds(
-          publicKey,
-          stakedAccountId,
-          stakedNodeId
-        )
-        // query account via consensus node to verify creation
-        const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
-        const accountID = accountInfoFromConsensusNode.accountId.toString()
-        const stakedAccountIDFromConsensusNode =
-          accountInfoFromConsensusNode.stakingInfo.stakedAccountId
-        const stakedNodeIDFromConsensusNode =
-          accountInfoFromConsensusNode.stakingInfo.stakedNodeId.low
-
-        // query account via mirror node to confirm availability after creation
-        const respJSON = await getJsonData(accountID)
-        const stakedAccountIDFromMirrorNode = respJSON.accounts[0].staked_account_id
-        const stakedNodeIDFromMirrorNode = respJSON.accounts[0].staked_node_id
-
-        // confirm pass for account creation with staked node id set to random between 0 and 6,
-        // note: Hedera network does not permit setting of both, so will set staked account id
-        // to a null value
-        expect(stakedAccountIDFromConsensusNode).to.equal(null)
-        expect(stakedAccountIDFromMirrorNode).to.equal(null)
-        expect(stakedNodeIDFromConsensusNode).to.equal(stakedNodeId)
-        expect(stakedNodeIDFromMirrorNode).to.equal(stakedNodeId)
-      }
-    })  
+    })     
   })
   //----------- If true - account declines receiving a staking reward -----------
   describe('Account declines receiving a staking reward', async function () {
     // Create an account and set the account to decline staking rewards
     it('Creates an account and set the account to decline staking rewards', async function () {
-      const newAccountID = await createAccountDeclineRewards(publicKey, true)
-
+    // Create acount with the JSON-RPC that declines rewards for staking
+    const response = await JSONRPCRequest('createAccount', {
+        publicKey: publicKey,
+        declineStakingReward: true
+      })
+      if(response.status == "NOT_IMPLEMENTED") this.skip()
+      const newAccountID = response.accountId
       // Query the consensus node
       const cNodeQuery = await getAccountInfo(newAccountID)
       const cNodeRes = cNodeQuery.stakingInfo.declineStakingReward
@@ -408,8 +417,11 @@ describe('#createAccount()', function () {
     })
     // Create an account and leave decline rewards at default value
     it('Creates an account and leave staking rewards at default value', async function () {
-      const newAccountID = await createTestAccount(publicKey)
-
+      const response = await JSONRPCRequest('createAccount', {
+        publicKey: publicKey
+      })
+      if(response.status == "NOT_IMPLEMENTED") this.skip()
+      const newAccountID = response.accountId
       // first query consensus node
       const cNodeQuery = await getAccountInfo(newAccountID)
       const cNodeRes = cNodeQuery.stakingInfo.declineStakingReward
@@ -424,7 +436,11 @@ describe('#createAccount()', function () {
     // Create an account set the decline rewards value to 5
     it('Creates an account and set the decline rewards value to 5', async function () {
       try {
-        await createAccountDeclineRewards(publicKey, 5)
+        const response = await JSONRPCRequest('createAccount', {
+          publicKey: publicKey,
+          declineStakingReward: 5
+        })
+        if(response.status == "NOT_IMPLEMENTED") this.skip()
       } catch (error) {
           return
       }
@@ -434,9 +450,15 @@ describe('#createAccount()', function () {
   describe('Create accounts with a memo', async function () {
     // Create an account with a memo
     it('Creates an account with a memo', async function () {
-      let testMemo = 'testMemo'
-      const newAccountID = await createAccountMemo(publicKey, testMemo)
+      const testMemo = 'testMemo'
+      // Create account with the JSON-RPC that includes a memo in the memo field
+      const response = await JSONRPCRequest('createAccount', {
+        publicKey: publicKey,
+        accountMemo: testMemo,
+      })
+      if(response.status == "NOT_IMPLEMENTED") this.skip()
 
+      const newAccountID = response.accountId
       // First query consensus node
       const cNodeQuery = await getAccountInfo(newAccountID)
       const cNodeRes = cNodeQuery.accountMemo
@@ -453,7 +475,11 @@ describe('#createAccount()', function () {
       const testMemo =
         'testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo12testMemo123' // 101 characters
       try {
-        await createAccountMemo(publicKey, testMemo)
+        const response = await JSONRPCRequest('createAccount', {
+        publicKey: publicKey,
+        accountMemo: testMemo,
+      })
+      if(response.status == "NOT_IMPLEMENTED") this.skip()
       } catch (error) {
           return
       }
@@ -467,6 +493,7 @@ describe('#createAccount()', function () {
         publicKey: publicKey,
         autoRenewPeriod: BigInt(2592000).toString(),
       })
+      if(response.status == "NOT_IMPLEMENTED") this.skip()
       let newAccountId = response.accountId
       // consensus node account
       const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
@@ -480,6 +507,7 @@ describe('#createAccount()', function () {
         publicKey: publicKey,
         autoRenewPeriod: BigInt(-1).toString(),
       })
+      if(response.status == "NOT_IMPLEMENTED") this.skip()
       let newAccountId = response.accountId
       // consensus node account
       const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
@@ -496,6 +524,7 @@ describe('#createAccount()', function () {
         publicKey: publicKey,
         autoRenewPeriod: BigInt(864000).toString(),
       })
+      if(response.status == "NOT_IMPLEMENTED") this.skip()
       let newAccountId = response.accountId
       // consensus node account
       const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
@@ -519,11 +548,13 @@ describe('#createAccount()', function () {
       const aliasIdStr = JSON.stringify(aliasID.toString())
 
       // initiate request for JSON-RPC server to transfer into alias account to initiate account creation
-      await createAliasAccount(
-        process.env.OPERATOR_ACCOUNT_ID,
-        aliasIdStr, 
-        initialBalance
-        )
+      // Create alias account with the JSON-RPC 
+      const response = await JSONRPCRequest('createAccountFromAlias', {
+        operator_id: process.env.OPERATOR_ACCOUNT_ID,
+        aliasAccountId: aliasIdStr,
+        initialBalance: initialBalance
+      })
+      if(response.status == "NOT_IMPLEMENTED") this.skip()
 
       // query account via consensus node to verify creation
       const accountInfoFromConsensusNode = await getAccountInfo(aliasID)
