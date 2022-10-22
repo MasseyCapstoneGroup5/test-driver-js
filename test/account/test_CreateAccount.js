@@ -393,6 +393,26 @@ describe('#createAccount()', function () {
       }
       assert.fail("Should throw an error")
     })     
+    // Create an account and set both a staking account ID and node ID
+    it('Creates an account and sets both a staking account ID and node ID', async function () {
+      try {
+        // set staked account ID to operator account ID
+      const stakedAccountId = process.env.OPERATOR_ACCOUNT_ID
+      // select a staked node id betwen 0 and 6 for the test
+      const stakedNodeId = Math.floor(Math.random() * 6) + 1
+
+      // request JSON-RPC create account with both StakedAccountId and StakedNodeId
+      const response = await JSONRPCRequest('createAccount', {
+        publicKey: publicKey,
+        stakedAccountId: stakedAccountId,
+        stakedNodeId: stakedNodeId
+      })
+      if(response.status === "NOT_IMPLEMENTED") this.skip()
+      } catch(err) {
+        assert.equal(err.data.status, 'INVALID_STAKING_ID');
+        return
+      }
+    }) 
   })
   //----------- If true - account declines receiving a staking reward -----------
   describe('Account declines receiving a staking reward', async function () {
