@@ -1,4 +1,4 @@
-import {JSONRPC, JSONRPCClient} from "json-rpc-2.0";
+import { JSONRPC, JSONRPCClient } from "json-rpc-2.0";
 import fetch from "node-fetch";
 import 'dotenv/config'
 

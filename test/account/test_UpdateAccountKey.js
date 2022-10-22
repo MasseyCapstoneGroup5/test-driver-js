@@ -1,9 +1,9 @@
-import {JSONRPCRequest} from "../../client.js";
-import {PublicKey } from "@hashgraph/sdk";
-import {getAccountInfo} from "../../SDKEnquiry.js";
-import {updateAccountKey} from "../../generateUpdates.js";
-import {expect, assert} from "chai";
-import {setOperator} from "../../setup_Tests.js";
+import { JSONRPCRequest } from "../../client.js";
+import { PublicKey } from "@hashgraph/sdk";
+import { getAccountInfo } from "../../SDKEnquiry.js";
+import { updateAccountKey } from "../../generateUpdates.js";
+import { expect, assert } from "chai";
+import { setOperator } from "../../setup_Tests.js";
 
 let accountId;
 let firstPvtKey, firstPublicKey;    // generate first pair of keys for new account
@@ -52,7 +52,7 @@ let randomPvtKey, randomPublicKey;  // a random pair to test authorisation failu
         let response = await JSONRPCRequest("createAccount", {
             "publicKey": firstPublicKey
         })
-        if(response.status == "NOT_IMPLEMENTED") this.skip()
+        if(response.status === "NOT_IMPLEMENTED") this.skip()
         accountId = response.accountId;
     });    
 
@@ -115,8 +115,6 @@ let randomPvtKey, randomPublicKey;  // a random pair to test authorisation failu
     })
     // Another test in the same suite
     it('test that the two public keys were not the same', async function () {
-        //console.log(typeof(JSON.stringify(firstPublicKey)) + "  " + JSON.stringify(firstPublicKey));
-        //console.log(typeof(JSON.stringify(newPublicKey)) + "  " + JSON.stringify(newPublicKey));
         assert.notEqual(JSON.stringify(firstPublicKey), JSON.stringify(newPublicKey));
     })
 });

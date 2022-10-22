@@ -1,8 +1,8 @@
-import {JSONRPCRequest} from "../../client.js";
-import {getAccountInfo} from "../../SDKEnquiry.js";
-import {updateAccountMemo} from "../../generateUpdates.js";
-import {expect, assert} from "chai";
-import {setOperator} from "../../setup_Tests.js";
+import { JSONRPCRequest } from "../../client.js";
+import { getAccountInfo } from "../../SDKEnquiry.js";
+import { updateAccountMemo } from "../../generateUpdates.js";
+import { expect, assert } from "chai";
+import { setOperator } from "../../setup_Tests.js";
 
 let newAccountId;
 let newPrivateKey;
@@ -17,10 +17,10 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
     // before and after hooks (normally used to set up and reset the client SDK)
     before(async function () {
         await setOperator(process.env.OPERATOR_ACCOUNT_ID, process.env.OPERATOR_ACCOUNT_PRIVATE_KEY)
-    });
+    })
     after(async function () {
         await JSONRPCRequest("reset")
-    });
+    })
     
     // create a new account via JSON-RPC server for update of memo field-testing
     it('should create a new account via JSON-RPC server', async function () {
@@ -34,16 +34,16 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
         let response = await JSONRPCRequest("createAccount", {
             "publicKey": newPublicKey
         });
-        if(response.status == "NOT_IMPLEMENTED") this.skip()
+        if(response.status === "NOT_IMPLEMENTED") this.skip()
         newAccountId = response.accountId
-    });
+    })
 
     // Retrieve initial (default) memo value of newly created account
     it('should get initial memo value', async function () {
         // Use the JS SDK Client to retrieve default memo from new account
         let accountInfo = await getAccountInfo(newAccountId);
         initialMemo = accountInfo.accountMemo;
-    });   
+    }) 
 
     // change value in memo field to a random five-character string via JSON-RPC
     it('should test memo field is too long', async function () {        
@@ -71,7 +71,7 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
                 console.log("ERR " + value);
             }           
         }        
-    });
+    })
 
     it('should verify memo was updated', async function () {
         // update memo on account
@@ -84,7 +84,7 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
 
         // Check if memo was successfully updated
         expect(updatedMemo).to.equal(memostring);
-    });
+    })
 
     // Another test in the same suite
     it('test initial memo was set to default value for new account', async function () {
@@ -100,7 +100,7 @@ let initialMemo, updatedMemo;   // test for change from initial to updated memo 
     it('test the updated memo is not the initial memo', async function () {
         assert.notEqual(memostring, initialMemo);
     })  
-});
+})
 
 async function generateLongString(numRepetitions) {
     // keeps concatenating one-character strings to make longer string
