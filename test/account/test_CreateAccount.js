@@ -31,14 +31,11 @@ describe('#createAccount()', function () {
 
   //----------- Key is needed to sign each transfer -----------
   describe('Key signature for each transfer', function () {
-    it('Creates an account with a public key', async function () {
-      
-      // set initial balance of 10,000,000,000 tinybars (100 Hbar) 
-      const initialBal = 10000000000
+    it('Creates an account with a public key', async function () {      
+
       // initiate request for JSON-RPC server to create a new account
       const response = await JSONRPCRequest('createAccount', {
-        publicKey: publicKey,
-        initialBalance: initialBal
+        publicKey: publicKey
       })
       if(response.status === "NOT_IMPLEMENTED") this.skip()
       const newAccountId = response.accountId
@@ -93,6 +90,35 @@ describe('#createAccount()', function () {
         return
       }
       assert.fail("Should throw an error")
+    })    
+    //----------- Create an account with an initial balance -----------
+  describe('Create an account with an initial balance', function () {
+    it('Sets initial balance to 100 HBar', async function () {
+      // set initial balance of 10,000,000,000 tinybars (100 Hbar) 
+      const initialBal = 10000000000
+      // initiate request for JSON-RPC server to create a new account
+      const response = await JSONRPCRequest('createAccount', {
+        publicKey: publicKey,
+        initialBalance: initialBal
+      })
+      if(response.status === "NOT_IMPLEMENTED") this.skip()
+      const newAccountId = response.accountId
+
+      // query account balance via consensus node to check amount set
+      const accountInfoFromConsensusNode = await getAccountInfo(newAccountId)
+      const accountIDFromConsensusNode = 
+        accountInfoFromConsensusNode.accountId.toString()
+      const accountBalConsensus = accountInfoFromConsensusNode.balance
+      const accountBalanceConsensusNode = accountBalConsensus._valueInTinybar
+
+      // query account balance via mirror node to check amount set
+      const accountInfoFromMirrorNode = await getJsonData(accountIDFromConsensusNode)
+      const accountBalMirror = accountInfoFromMirrorNode.accounts[0].balance
+      const accountBalanceMirrorNode = accountBalMirror._valueInTinybar
+
+      // confirm pass status with assertion testing for account creation
+      expect(initialBal).to.equal(Number(accountBalanceConsensusNode))
+      //expect(initialBal).to.equal(Number(accountBalanceMirrorNode))
     })
     // Set initial balance to -1 HBAR
     it('Sets initial balance to -1 HBar', async function () {
@@ -158,6 +184,7 @@ describe('#createAccount()', function () {
         return
       }
       assert.fail("Should throw an error")
+      })
     })
   })
   //-----------  Account key signs transactions depositing into account -----------
@@ -381,10 +408,26 @@ describe('#createAccount()', function () {
     it('Creates an account and sets staked account ID with no input', async function () {
       try {
         // set a staked node Id with no input
-        const noInputStakedId = ''
+        const noInputStakedAccountId = ''
         const response = await JSONRPCRequest('createAccount', {
           publicKey: publicKey,
-          stakedNodeId: noInputStakedId
+          stakedAccountId: noInputStakedAccountId
+        })
+        if(response.status === "NOT_IMPLEMENTED") this.skip()
+        // confirm error thrown for create with no input for staked account ID
+      } catch (err) {
+        return
+      }
+      assert.fail("Should throw an error")
+    }) 
+    // Create an account and set staked account ID with no input
+    it('Creates an account and sets staked node ID with no input', async function () {
+      try {
+        // set a staked node Id with no input
+        const noInputStakedNodeId = ''
+        const response = await JSONRPCRequest('createAccount', {
+          publicKey: publicKey,
+          stakedNodeId: noInputStakedNodeId
         })
         if(response.status === "NOT_IMPLEMENTED") this.skip()
         // confirm error thrown for create with no input for staked account ID
