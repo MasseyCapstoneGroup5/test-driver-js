@@ -551,6 +551,7 @@ describe('#createAccount()', function () {
       })
       if(response.status === "NOT_IMPLEMENTED") this.skip()
       } catch (err) {
+          assert.equal(err.data.status, 'MEMO_TOO_LONG')
           return
       }
       assert.fail("Should throw an error")
